@@ -1,0 +1,29 @@
+{
+    "name": "theushen/nightwatch",
+    "description": "Nightwatch integration for Laravel - receives Bun data and sends to Nightwatch API.",
+    "type": "library",
+    "authors": [
+        {
+            "name": "TheusHen",
+            "email": "your@email.com"
+        }
+    ],
+    "require": {
+        "php": "^8.0",
+        "illuminate/support": "^10.0|^11.0",
+        "illuminate/routing": "^10.0|^11.0",
+        "guzzlehttp/guzzle": "^7.9"
+    },
+    "autoload": {
+        "psr-4": {
+            "Nightwatch\\": ""
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Nightwatch\\NightwatchServiceProvider"
+            ]
+        }
+    }
+}
