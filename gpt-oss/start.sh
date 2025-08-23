@@ -12,6 +12,13 @@ if ! command -v ollama &> /dev/null; then
 fi
 
 ollama -v
+
+# Start Ollama server if not running
+if ! pgrep -f "ollama serve" > /dev/null; then
+  nohup ollama serve > ollama-server.log 2>&1 &
+  sleep 2
+fi
+
 # gpt-oss:20b Size: 14GB Context: 128K
 ollama pull gpt-oss:20b
 

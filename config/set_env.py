@@ -2,14 +2,11 @@ import os
 from dotenv import load_dotenv
 
 REQUIRED_ENV_VARS = [
-    "SENTRY_DSN",
     "NODE_ENV",
-    "MONGO_URI",
-    "NIGHTWATCH_URL",
-    "NIGHTWATCH_TOKEN"
+    "MONGO_URI"
 ]
 
-ENV_PATH = "/.env"
+ENV_PATH = os.path.join(os.path.dirname(__file__), "../.env")
 
 def prompt_env_vars():
     env_vars = {}
