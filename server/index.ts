@@ -203,6 +203,46 @@ const server = Bun.serve({
       }
     }
 
+    // --- Feedback endpoint ---
+    if (url.pathname === "/feedback" && req.method === "POST") {
+      if (!checkAuthorization(req)) {
+        return buildResponse({ error: "Unauthorized" }, 401);
+      }
+      try {
+        const body = await req.json();
+        const { prompt, response, feedback, ideal } = body as {
+          prompt?: string;
+          response?: string;
+          feedback?: "positive" | "negative";
+          ideal?: string;
+        };
+
+        if (!prompt || !response || !feedback) {
+          return buildResponse({ error: "Missing fields" }, 400);
+        }
+
+        const { MongoClient } = await import("mongodb");
+        const client = new MongoClient(process.env.MONGO_URI || "mongodb://localhost:27017");
+        await client.connect();
+        const db = client.db("roommate");
+        await db.collection("feedbacks").insertOne({
+          prompt,
+          response,
+          feedback,
+          ideal,
+          createdAt: new Date(),
+        });
+        await client.close();
+
+        console.log("[INFO] Feedback armazenado");
+        return buildResponse({ success: true });
+      } catch (err: any) {
+        handleError(err);
+        console.error("[ERROR] /feedback failed:", err.message);
+        return buildResponse({ error: err.message }, 500);
+      }
+    }
+
     // Not found
     console.warn("[WARN] Route not found:", url.pathname);
     return buildResponse({ error: "Route not found" }, 404);

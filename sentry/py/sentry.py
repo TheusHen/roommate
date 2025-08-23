@@ -1,5 +1,8 @@
 import os
+from dotenv import load_dotenv
 import sentry_sdk
+
+load_dotenv()
 
 SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
 
