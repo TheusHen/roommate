@@ -61,6 +61,17 @@ def main():
     write_config(option)
     print(f'Analytics option "{option}" saved to {CONFIG_PATH}')
     print('.env updated.')
+    
+    # Test Sentry integration if DSN is provided
+    if option in ['Sentry', 'Both'] and 'SENTRY_DSN' in env_vars and env_vars['SENTRY_DSN']:
+        print('Testing Sentry integration...')
+        try:
+            import sys
+            sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'sentry', 'py'))
+            from sentry import test_sentry_integration
+            test_sentry_integration()
+        except Exception as e:
+            print(f'Sentry test failed: {e}')
 
 if __name__ == '__main__':
     main()
