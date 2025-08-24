@@ -43,11 +43,3 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-
-# Just for now while I don't start coding the app
-android/
-ios/
-linux/
-macos/
-windows/
-web/

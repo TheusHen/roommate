@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if ollama list | grep -E 'gpt-oss:20b|gpt-oss:20b-lora' | grep -q 'Running'; then
+  echo "gpt-oss:20b or gpt-oss:20b-lora is already running. Skipping startup."
+  exit 0
+fi
+
 MIN_GB=14
 ./scripts/check_space.sh $MIN_GB
 if [ $? -ne 0 ]; then
