@@ -27,12 +27,12 @@ fi
 # gpt-oss:20b Size: 14GB Context: 128K
 ollama pull gpt-oss:20b
 
-TURING_FILE="turing_count.txt"
-if [ ! -f "$TURING_FILE" ]; then
-  echo "0" > "$TURING_FILE"
+TUNING_FILE="tuning_count.txt"
+if [ ! -f "$TUNING_FILE" ]; then
+  echo "0" > "$TUNING_FILE"
 fi
 
-COUNT=$(cat "$TURING_FILE")
+COUNT=$(cat "$TUNING_FILE")
 
 if [ "$COUNT" -ge 1 ]; then
   nohup ollama run gpt-oss-20b-lora > output.log 2>&1 &
