@@ -1,10 +1,11 @@
 {
   "name": "server",
   "module": "index.ts",
-  "type": "module",
-  "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.4",
+    "typescript": "^5.9.2"
   },
   "peerDependencies": {
     "typescript": "^5"

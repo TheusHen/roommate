@@ -20,16 +20,14 @@ function generatePassword(length = 32) {
   return crypto.randomBytes(length).toString("hex");
 }
 
-// Load or generate and save the API password (never changes)
 if (fs.existsSync(passwordFilePath)) {
   apiPassword = fs.readFileSync(passwordFilePath, "utf8").trim();
 } else {
-  apiPassword = generatePassword(16); // 32 hex chars
+  apiPassword = generatePassword(16);
   fs.writeFileSync(passwordFilePath, apiPassword, "utf8");
   console.log(`[INFO] Generated API password: ${apiPassword}`);
 }
 
-// Always show the password on server start
 console.log(`[INFO] API password for authorization: ${apiPassword}`);
 
 async function sendNightwatch(error: any) {
@@ -57,7 +55,6 @@ function handleError(error: any) {
   }
 }
 
-// Authorization helper
 function checkAuthorization(req: Request) {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader || authHeader !== `Bearer ${apiPassword}`) {
@@ -66,17 +63,70 @@ function checkAuthorization(req: Request) {
   return true;
 }
 
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  };
+}
+
+function withCorsHeaders(resp: Response) {
+  const headers = new Headers(resp.headers);
+  headers.set("Access-Control-Allow-Origin", "*");
+  headers.set("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+  headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  return new Response(resp.body, {
+    status: resp.status,
+    headers,
+  });
+}
+
+async function logRequest(req: Request, bodyRaw: string | null = null) {
+  console.log("==== INCOMING REQUEST ====");
+  console.log("URL:", req.url);
+  console.log("Method:", req.method);
+  console.log("Headers:");
+  for (const [k, v] of req.headers.entries()) {
+    console.log(`  ${k}: ${v}`);
+  }
+  if (bodyRaw !== null) {
+    console.log("Body RAW:", bodyRaw);
+  }
+  console.log("==========================");
+}
+
+function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) {
+    return err.message;
+  }
+  if (typeof err === "string") {
+    return err;
+  }
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return String(err);
+  }
+}
+
+function getErrorStack(err: unknown): string {
+  if (err instanceof Error && err.stack) {
+    return err.stack;
+  }
+  return "";
+}
+
 const server = Bun.serve({
   port: 3000,
   async fetch(req) {
     const url = new URL(req.url);
     const startTime = Date.now();
-
     const country = Intl.DateTimeFormat().resolvedOptions().locale || "Unknown";
 
     async function buildResponse(data: any, status = 200) {
       const elapsed = Date.now() - startTime;
-      return new Response(
+      const resp = new Response(
         JSON.stringify({
           ...data,
           elapsed_ms: elapsed,
@@ -88,6 +138,14 @@ const server = Bun.serve({
           headers: { "Content-Type": "application/json" },
         }
       );
+      return withCorsHeaders(resp);
+    }
+
+    if (req.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders(),
+      });
     }
 
     if (url.pathname === "/") {
@@ -95,22 +153,35 @@ const server = Bun.serve({
       return buildResponse({ message: "Roommate: Using Ollama GPT-OSS:20B" });
     }
 
-    // Health check
     if (url.pathname === "/ping") {
       console.log("[INFO] /ping route called");
       return buildResponse({ message: "pong" });
     }
 
-    // --- Chat endpoint ---
     if (url.pathname === "/chat" && req.method === "POST") {
       if (!checkAuthorization(req)) {
         return buildResponse({ error: "Unauthorized" }, 401);
       }
       try {
-        const body = await req.json();
-        const { prompt } = body as { prompt?: string };
+        const bodyStream = await req.text();
+        await logRequest(req, bodyStream);
+
+        let body;
+        try {
+          body = JSON.parse(bodyStream);
+        } catch (jsonErr: unknown) {
+          const errMsg = getErrorMessage(jsonErr);
+          console.error("[ERROR] JSON.parse failed:", errMsg);
+          return buildResponse({
+            error: "Failed to parse JSON",
+            details: errMsg,
+            bodyRaw: bodyStream
+          }, 400);
+        }
+
+        const { prompt } = body;
         if (!prompt) {
-          return buildResponse({ error: "Missing required field: prompt" }, 400);
+          return buildResponse({ error: "Missing required field: prompt", received: body }, 400);
         }
 
         console.log(`[REQUEST] /chat with prompt: ${prompt}`);
@@ -124,27 +195,70 @@ const server = Bun.serve({
           }),
         });
 
-        const data = await ollamaResponse.json();
-        console.log("[SUCCESS] /chat response received");
+        const ollamaText = await ollamaResponse.text();
+        console.log("[DEBUG] Ollama response text:", ollamaText);
 
+        const lines = ollamaText.split('\n').filter(line => line.trim().length > 0);
+        const objects = [];
+        for (const line of lines) {
+          try {
+            objects.push(JSON.parse(line));
+          } catch (e) {
+            console.error("[ERROR] Invalid JSON line from Ollama:", line, getErrorMessage(e));
+          }
+        }
+
+        let fullResponse = "";
+        for (const obj of objects) {
+          if (obj?.message?.content) {
+            fullResponse += obj.message.content;
+          }
+        }
+
+        const data = objects.length > 0 ? { ...objects[objects.length - 1], message: { ...objects[objects.length - 1].message, content: fullResponse } } : null;
+        if (!data) {
+          return buildResponse({
+            error: "Could not parse any JSON object from Ollama response.",
+            ollamaRaw: ollamaText,
+          }, 500);
+        }
+
+        console.log("[SUCCESS] /chat response received");
         return buildResponse({ result: data });
-      } catch (err: any) {
+
+      } catch (err: unknown) {
         handleError(err);
-        console.error("[ERROR] /chat failed:", err.message);
-        return buildResponse({ error: err.message }, 500);
+        const errMsg = getErrorMessage(err);
+        const errStack = getErrorStack(err);
+        console.error("[ERROR] /chat failed:", errMsg, errStack);
+        return buildResponse({ error: errMsg, stack: errStack }, 500);
       }
     }
 
-    // --- Generate endpoint ---
     if (url.pathname === "/generate" && req.method === "POST") {
       if (!checkAuthorization(req)) {
         return buildResponse({ error: "Unauthorized" }, 401);
       }
       try {
-        const body = await req.json();
-        const { prompt } = body as { prompt?: string };
+        const bodyStream = await req.text();
+        await logRequest(req, bodyStream);
+
+        let body;
+        try {
+          body = JSON.parse(bodyStream);
+        } catch (jsonErr: unknown) {
+          const errMsg = getErrorMessage(jsonErr);
+          console.error("[ERROR] JSON.parse failed:", errMsg);
+          return buildResponse({
+            error: "Failed to parse JSON",
+            details: errMsg,
+            bodyRaw: bodyStream
+          }, 400);
+        }
+
+        const { prompt } = body;
         if (!prompt) {
-          return buildResponse({ error: "Missing required field: prompt" }, 400);
+          return buildResponse({ error: "Missing required field: prompt", received: body }, 400);
         }
 
         console.log(`[REQUEST] /generate with prompt: ${prompt}`);
@@ -158,27 +272,69 @@ const server = Bun.serve({
           }),
         });
 
-        const data = await ollamaResponse.json();
-        console.log("[SUCCESS] /generate response received");
+        const ollamaText = await ollamaResponse.text();
+        console.log("[DEBUG] Ollama response text:", ollamaText);
 
+        const lines = ollamaText.split('\n').filter(line => line.trim().length > 0);
+        const objects = [];
+        for (const line of lines) {
+          try {
+            objects.push(JSON.parse(line));
+          } catch (e) {
+            console.error("[ERROR] Invalid JSON line from Ollama:", line, getErrorMessage(e));
+          }
+        }
+
+        let fullResponse = "";
+        for (const obj of objects) {
+          if (obj?.message?.content) {
+            fullResponse += obj.message.content;
+          }
+        }
+
+        const data = objects.length > 0 ? { ...objects[objects.length - 1], message: { ...objects[objects.length - 1].message, content: fullResponse } } : null;
+        if (!data) {
+          return buildResponse({
+            error: "Could not parse any JSON object from Ollama response.",
+            ollamaRaw: ollamaText,
+          }, 500);
+        }
+
+        console.log("[SUCCESS] /generate response received");
         return buildResponse({ result: data });
-      } catch (err: any) {
+      } catch (err: unknown) {
         handleError(err);
-        console.error("[ERROR] /generate failed:", err.message);
-        return buildResponse({ error: err.message }, 500);
+        const errMsg = getErrorMessage(err);
+        const errStack = getErrorStack(err);
+        console.error("[ERROR] /generate failed:", errMsg, errStack);
+        return buildResponse({ error: errMsg, stack: errStack }, 500);
       }
     }
 
-    // --- Embeddings endpoint ---
     if (url.pathname === "/embeddings" && req.method === "POST") {
       if (!checkAuthorization(req)) {
         return buildResponse({ error: "Unauthorized" }, 401);
       }
       try {
-        const body = await req.json();
-        const { prompt } = body as { prompt?: string };
+        const bodyStream = await req.text();
+        await logRequest(req, bodyStream);
+
+        let body;
+        try {
+          body = JSON.parse(bodyStream);
+        } catch (jsonErr: unknown) {
+          const errMsg = getErrorMessage(jsonErr);
+          console.error("[ERROR] JSON.parse failed:", errMsg);
+          return buildResponse({
+            error: "Failed to parse JSON",
+            details: errMsg,
+            bodyRaw: bodyStream
+          }, 400);
+        }
+
+        const { prompt } = body;
         if (!prompt) {
-          return buildResponse({ error: "Missing required field: prompt" }, 400);
+          return buildResponse({ error: "Missing required field: prompt", received: body }, 400);
         }
 
         console.log(`[REQUEST] /embeddings with prompt: ${prompt}`);
@@ -192,33 +348,69 @@ const server = Bun.serve({
           }),
         });
 
-        const data = await ollamaResponse.json();
-        console.log("[SUCCESS] /embeddings response received");
+        const ollamaText = await ollamaResponse.text();
+        console.log("[DEBUG] Ollama response text:", ollamaText);
 
+        const lines = ollamaText.split('\n').filter(line => line.trim().length > 0);
+        const objects = [];
+        for (const line of lines) {
+          try {
+            objects.push(JSON.parse(line));
+          } catch (e) {
+            console.error("[ERROR] Invalid JSON line from Ollama:", line, getErrorMessage(e));
+          }
+        }
+
+        let fullResponse = "";
+        for (const obj of objects) {
+          if (obj?.message?.content) {
+            fullResponse += obj.message.content;
+          }
+        }
+
+        const data = objects.length > 0 ? { ...objects[objects.length - 1], message: { ...objects[objects.length - 1].message, content: fullResponse } } : null;
+        if (!data) {
+          return buildResponse({
+            error: "Could not parse any JSON object from Ollama response.",
+            ollamaRaw: ollamaText,
+          }, 500);
+        }
+
+        console.log("[SUCCESS] /embeddings response received");
         return buildResponse({ result: data });
-      } catch (err: any) {
+      } catch (err: unknown) {
         handleError(err);
-        console.error("[ERROR] /embeddings failed:", err.message);
-        return buildResponse({ error: err.message }, 500);
+        const errMsg = getErrorMessage(err);
+        const errStack = getErrorStack(err);
+        console.error("[ERROR] /embeddings failed:", errMsg, errStack);
+        return buildResponse({ error: errMsg, stack: errStack }, 500);
       }
     }
 
-    // --- Feedback endpoint ---
     if (url.pathname === "/feedback" && req.method === "POST") {
       if (!checkAuthorization(req)) {
         return buildResponse({ error: "Unauthorized" }, 401);
       }
       try {
-        const body = await req.json();
-        const { prompt, response, feedback, ideal } = body as {
-          prompt?: string;
-          response?: string;
-          feedback?: "positive" | "negative";
-          ideal?: string;
-        };
+        const bodyStream = await req.text();
+        await logRequest(req, bodyStream);
+
+        let body;
+        try {
+          body = JSON.parse(bodyStream);
+        } catch (jsonErr: unknown) {
+          const errMsg = getErrorMessage(jsonErr);
+          console.error("[ERROR] JSON.parse failed:", errMsg);
+          return buildResponse({
+            error: "Failed to parse JSON",
+            details: errMsg,
+            bodyRaw: bodyStream
+          }, 400);
+        }
+        const { prompt, response, feedback, ideal } = body;
 
         if (!prompt || !response || !feedback) {
-          return buildResponse({ error: "Missing fields" }, 400);
+          return buildResponse({ error: "Missing fields", received: body }, 400);
         }
 
         const { MongoClient } = await import("mongodb");
@@ -234,16 +426,17 @@ const server = Bun.serve({
         });
         await client.close();
 
-        console.log("[INFO] Feedback armazenado");
+        console.log("[INFO] Feedback saved");
         return buildResponse({ success: true });
-      } catch (err: any) {
+      } catch (err: unknown) {
         handleError(err);
-        console.error("[ERROR] /feedback failed:", err.message);
-        return buildResponse({ error: err.message }, 500);
+        const errMsg = getErrorMessage(err);
+        const errStack = getErrorStack(err);
+        console.error("[ERROR] /feedback failed:", errMsg, errStack);
+        return buildResponse({ error: errMsg, stack: errStack }, 500);
       }
     }
 
-    // Not found
     console.warn("[WARN] Route not found:", url.pathname);
     return buildResponse({ error: "Route not found" }, 404);
   },
