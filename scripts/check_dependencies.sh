@@ -43,5 +43,3 @@ if ! command -v varnishd &> /dev/null; then
 else
     echo "Varnish already installed: $(varnishd -V | head -n 1)"
 fi
-
-exec bash
