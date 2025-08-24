@@ -54,10 +54,10 @@ echo -e "\033[1;32m[OK]\033[0m Main application started (PID $APP_PID)."
 
 # Install Node.js dependencies
 loading_bar "[5/7] Installing Node.js dependencies (server/ & sentry/ts & scheduled/)..." 10
-npm install --prefix ./server &
-npm install --prefix ./sentry/ts &
-npm install --prefix ./scheduled &
-echo -e "\033[1;32m[OK]\033[0m Node.js dependencies installation started."
+npm install --prefix ./server
+npm install --prefix ./sentry/ts
+npm install --prefix ./scheduled
+echo -e "\033[1;32m[OK]\033[0m Node.js dependencies installation completed."
 
 loading_bar "[6/8] Starting the Bun Server.." 8
 bun run ./server/index.ts
@@ -74,7 +74,7 @@ echo -e "\033[1;32m[OK]\033[0m Scheduler started."
 
 # Start nginx
 loading_bar "[EXTRA] Starting nginx..." 6
-sudo nginx -c $(pwd)/nginx/nginx.conf &
+sudo /usr/sbin/nginx -c $(pwd)/nginx/nginx.conf &
 echo -e "\033[1;32m[OK]\033[0m Nginx started."
 
 # Start varnish

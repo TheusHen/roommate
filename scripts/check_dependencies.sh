@@ -43,3 +43,10 @@ if ! command -v varnishd &> /dev/null; then
 else
     echo "Varnish already installed: $(varnishd -V | head -n 1)"
 fi
+
+if ! command -v ollama &> /dev/null; then
+    echo "Ollama not found. Installing..."
+    ./scripts/install/ollama.sh
+else
+    echo "Ollama already installed: $(ollama -v)"
+fi
