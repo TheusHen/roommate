@@ -19,4 +19,4 @@ sudo tar -xzf "$FILENAME" -C "$INSTALL_DIR" --strip-components=1
 echo "export PATH=\"$INSTALL_DIR/bin:\$PATH\"" | sudo tee "$PROFILE_FILE" > /dev/null
 
 echo "Varnish 7.7.3 downloaded and extracted to $INSTALL_DIR"
-echo "PATH updated via $PROFILE_FILE. You may need to restart your shell."
+echo "PATH updated via $PROFILE_FILE."

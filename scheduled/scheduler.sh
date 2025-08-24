@@ -1,6 +1,6 @@
 #!/bin/bash
 
 while true; do
-  node scheduler.js
+  node ./scheduled/scheduler.js
   sleep 60
 done

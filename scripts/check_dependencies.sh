@@ -9,6 +9,13 @@ else
     echo "Python already installed: $(python3 --version)"
 fi
 
+if ! command --version bun &> /dev/null; then
+    echo "Bun not found. Installing..."
+    ./scripts/install/bun.sh
+else
+    echo "Bun already installed: $(bun --version)"
+fi
+
 if ! command -v node &> /dev/null; then
     echo "Node.js not found. Installing..."
     ./scripts/install/node.sh
@@ -36,3 +43,5 @@ if ! command -v varnishd &> /dev/null; then
 else
     echo "Varnish already installed: $(varnishd -V | head -n 1)"
 fi
+
+exec bash

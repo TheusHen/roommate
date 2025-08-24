@@ -1,7 +1,5 @@
 #!/bin/bash
 
-
-
 chmod +x ./* ./scripts/*.sh ./gpt-oss/*.sh
 
 # Helper for loading bar animation
@@ -55,18 +53,22 @@ APP_PID=$!
 echo -e "\033[1;32m[OK]\033[0m Main application started (PID $APP_PID)."
 
 # Install Node.js dependencies
-loading_bar "[5/7] Installing Node.js dependencies (server/ & sentry/ts)..." 10
+loading_bar "[5/7] Installing Node.js dependencies (server/ & sentry/ts & scheduled/)..." 10
 npm install --prefix ./server &
 npm install --prefix ./sentry/ts &
+npm install --prefix ./scheduled &
 echo -e "\033[1;32m[OK]\033[0m Node.js dependencies installation started."
 
+loading_bar "[6/8] Starting the Bun Server.." 8
+bun run ./server/index.ts
+
 # Install PHP dependencies (Nightwatch)
-loading_bar "[6/7] Installing PHP dependencies (nightwatch)..." 7
+loading_bar "[7/8] Installing PHP dependencies (nightwatch)..." 7
 composer install --working-dir=./nightwatch &
 echo -e "\033[1;32m[OK]\033[0m PHP dependencies installation started."
 
 # Start scheduler
-loading_bar "[7/7] Starting scheduler..." 5
+loading_bar "[8/8] Starting scheduler..." 5
 nohup bash ./scheduled/scheduler.sh > ./output.log 2>&1 &
 echo -e "\033[1;32m[OK]\033[0m Scheduler started."
 
@@ -77,7 +79,7 @@ echo -e "\033[1;32m[OK]\033[0m Nginx started."
 
 # Start varnish
 loading_bar "[EXTRA] Starting varnish..." 6
-sudo varnishd -f $(pwd)/varnish/default.vcl -a :8080 -s malloc,256m &
+sudo varnishd -f $(pwd)/varnish/default.vcl -a :80 -s malloc,256m &
 echo -e "\033[1;32m[OK]\033[0m Varnish started."
 
 echo -e "\033[1;36m--------------------------------------\033[0m"

@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  roommate-sv:
+    build: .
+    container_name: roommate-sv
+    expose:
+      - "3000"
+      - "8080"
+      - "11434"
+    networks:
+      - roommate_network
+    ports:
+      - "80:80"
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+networks:
+  roommate_network:
+    driver: bridge

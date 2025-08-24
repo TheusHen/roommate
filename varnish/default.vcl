@@ -2,7 +2,7 @@ vcl 4.0;
 
 backend default {
     .host = "127.0.0.1";
-    .port = "3000";
+    .port = "8080";
     .probe = {
         .url = "/ping";
         .timeout = 2s;
@@ -28,14 +28,9 @@ sub vcl_backend_response {
     if (bereq.url == "/" || bereq.url == "/ping") {
         set beresp.ttl = 60s;
         set beresp.grace = 30s;
+        unset beresp.http.set-cookie;
     } else {
         set beresp.ttl = 0s;
-    }
-}
-
-sub vcl_backend_response {
-    if (bereq.url == "/" || bereq.url == "/ping") {
-        unset beresp.http.set-cookie;
     }
 }
 
