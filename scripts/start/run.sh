@@ -60,7 +60,7 @@ npm install --prefix ./scheduled
 echo -e "\033[1;32m[OK]\033[0m Node.js dependencies installation completed."
 
 loading_bar "[6/8] Starting the Bun Server.." 8
-bun run ./server/index.ts
+bun run ./server/index.ts &
 
 # Install PHP dependencies (Nightwatch)
 loading_bar "[7/8] Installing PHP dependencies (nightwatch)..." 7
