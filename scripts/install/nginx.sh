@@ -8,7 +8,7 @@ PROFILE_FILE="/etc/profile.d/nginx.sh"
 
 # Install build dependencies
 sudo apt update
-sudo apt install -y build-essential libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev
+sudo apt install -y build-essential libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev wget
 
 # Download and extract
 wget -O /tmp/nginx.tar.gz "$NGINX_URL"
@@ -21,8 +21,9 @@ cd /tmp/nginx-src
 make
 sudo make install
 
-# Add to PATH
+# Add Nginx to PATH
 echo "export PATH=\"$INSTALL_DIR/sbin:\$PATH\"" | sudo tee "$PROFILE_FILE" > /dev/null
+chmod +x "$PROFILE_FILE"
 
 echo "Nginx $NGINX_VERSION installed in $INSTALL_DIR."
-echo "PATH updated via $PROFILE_FILE. You may need to restart your shell."
+echo "PATH updated via $PROFILE_FILE. Run 'source $PROFILE_FILE' or restart your shell."

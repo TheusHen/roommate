@@ -66,7 +66,17 @@ npm install --prefix ./scheduled
 echo -e "\033[1;32m[OK]\033[0m Node.js dependencies installation completed."
 
 loading_bar "[6/8] Starting the Bun Server.." 8
-bun run ./server/index.ts &
+BUN_CMD="bun run ./server/index.ts"
+LOG_FILE="./bun.log"
+
+# Trap SIGINT (Ctrl+C)
+trap 'echo "Ctrl+C pressed: sending Bun server to background..."; disown %1; exit 0' SIGINT
+
+echo "Starting Bun server... Logs will appear below. Press Ctrl+C to background it."
+$BUN_CMD 2>&1 | tee "$LOG_FILE" &
+
+# Wait for the backgrounded process
+wait
 
 # Install PHP dependencies (Nightwatch)
 loading_bar "[7/8] Installing PHP dependencies (nightwatch)..." 7

@@ -1,20 +1,33 @@
 #!/bin/bash
+set -e
 
-# Check if ollama is installed first
+# Check if Ollama is installed
 if ! command -v ollama &> /dev/null; then
   echo "Ollama not found. Installing..."
   curl -fsSL https://ollama.com/install.sh | sh
 fi
 
-# Verify ollama is working
+# Verify Ollama installation
 ollama -v
 
-# Check if gpt-oss models are already running
+# Ensure Ollama server is running
+if ! pgrep -f "ollama serve" > /dev/null; then
+  echo "Starting Ollama server..."
+  nohup ollama serve > ollama-server.log 2>&1 &
+  sleep 5
+  if ! pgrep -f "ollama serve" > /dev/null; then
+    echo "Failed to start Ollama server."
+    exit 1
+  fi
+fi
+
+# Check if gpt-oss models are running
 if ollama list | grep -E 'gpt-oss:20b-highreasoning|gpt-oss:20b-lora' | grep -q 'Running'; then
   echo "gpt-oss:20b-highreasoning or gpt-oss:20b-lora is already running. Skipping startup."
   exit 0
 fi
 
+# Check disk space
 MIN_GB=14
 ./scripts/check_space.sh $MIN_GB
 if [ $? -ne 0 ]; then
@@ -22,16 +35,10 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Start Ollama server if not running
-if ! pgrep -f "ollama serve" > /dev/null; then
-  nohup ollama serve > ollama-server.log 2>&1 &
-  sleep 2
-fi
-
-# gpt-oss:20b Size: 14GB Context: 128K
+# Pull base model
 ollama pull gpt-oss:20b
 
-# Create high reasoning model if it does not exist
+# Create high reasoning model if missing
 if ! ollama list | grep -q "gpt-oss:20b-highreasoning"; then
   cat > gpt-oss-highreasoning.modelfile <<EOF
 FROM gpt-oss:20b
@@ -51,6 +58,7 @@ EOF
   ollama create gpt-oss:20b-highreasoning -f gpt-oss-highreasoning.modelfile
 fi
 
+# Tuning counter
 TUNING_FILE="tuning_count.txt"
 if [ ! -f "$TUNING_FILE" ]; then
   echo "0" > "$TUNING_FILE"
@@ -58,6 +66,7 @@ fi
 
 COUNT=$(cat "$TUNING_FILE")
 
+# Run model
 if [ "$COUNT" -ge 1 ]; then
   nohup ollama run gpt-oss:20b-lora > output.log 2>&1 &
 else
@@ -65,3 +74,4 @@ else
 fi
 
 echo $! > ollama.pid
+echo "Ollama server started and model is running."
