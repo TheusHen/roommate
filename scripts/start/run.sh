@@ -21,7 +21,7 @@ echo -e "\033[1;32m   Roommate Startup Script    \033[0m"
 echo -e "\033[1;32m==============================\033[0m"
 
 # --- Kill processes using ports 3000 and 80 ---
-for PORT in 3000 80; do
+for PORT in 80 3000 8080; do
     if lsof -i :$PORT &> /dev/null; then
         echo -e "\033[1;33m[WARN]\033[0m Port $PORT in use, killing process..."
         lsof -i :$PORT | awk 'NR>1 {print $2}' | xargs -r kill -9
