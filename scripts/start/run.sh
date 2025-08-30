@@ -179,8 +179,14 @@ if [ "$DEPLOYMENT_TYPE" = "local" ]; then
     echo -e "\033[1;36m    Local development mode ready!     \033[0m"
     echo -e "\033[1;36m    Access: http://localhost:3000      \033[0m"
 elif [ "$DEPLOYMENT_TYPE" = "https" ]; then
-    echo -e "\033[1;36m     HTTPS production mode ready!     \033[0m" 
-    echo -e "\033[1;36m    Access: https://$DOMAIN            \033[0m"
+    if [ -f "/tmp/ssl_domain.txt" ]; then
+        DOMAIN=$(cat /tmp/ssl_domain.txt)
+        echo -e "\033[1;36m     HTTPS production mode ready!     \033[0m" 
+        echo -e "\033[1;36m    Access: https://$DOMAIN            \033[0m"
+    else
+        echo -e "\033[1;36m     HTTPS production mode ready!     \033[0m" 
+        echo -e "\033[1;36m    Access: https://your-domain.com    \033[0m"
+    fi
 else
     echo -e "\033[1;36m     HTTP production mode ready!      \033[0m"
     echo -e "\033[1;36m    Access: http://your-domain.com     \033[0m"
