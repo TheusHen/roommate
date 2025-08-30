@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# Check if ollama is installed first
+if ! command -v ollama &> /dev/null; then
+  echo "Ollama not found. Installing..."
+  curl -fsSL https://ollama.com/install.sh | sh
+fi
+
+# Verify ollama is working
+ollama -v
+
+# Check if gpt-oss models are already running
 if ollama list | grep -E 'gpt-oss:20b-highreasoning|gpt-oss:20b-lora' | grep -q 'Running'; then
   echo "gpt-oss:20b-highreasoning or gpt-oss:20b-lora is already running. Skipping startup."
   exit 0
@@ -11,12 +21,6 @@ if [ $? -ne 0 ]; then
     echo "Aborting: Not enough disk space for gpt-oss:20b (requires ${MIN_GB}GB)."
     exit 1
 fi
-
-if ! command -v ollama &> /dev/null; then
-  curl -fsSL https://ollama.com/install.sh | sh
-fi
-
-ollama -v
 
 # Start Ollama server if not running
 if ! pgrep -f "ollama serve" > /dev/null; then
