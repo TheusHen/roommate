@@ -43,8 +43,8 @@ PARAMETER repeat_penalty 1.05
 PARAMETER num_ctx 128000
 
 SYSTEM """
-Você é um modelo de raciocínio avançado.
-Sempre desenvolva o pensamento passo a passo antes de responder.
+You're a model of advanced reasoning.
+Always develop your thinking step by step before responding.
 """
 EOF
 
