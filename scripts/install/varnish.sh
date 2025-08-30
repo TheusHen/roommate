@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
-sudo apt install varnish -y
+sudo apt update
+sudo apt install -y varnish
 
-echo "Varnish downloaded"
+echo "Varnish installed successfully and ready to run."

@@ -21,6 +21,9 @@ cd /tmp/nginx-src
 make
 sudo make install
 
+# Symlink to /usr/sbin/nginx so Varnish can find it
+sudo ln -sf "$INSTALL_DIR/sbin/nginx" /usr/sbin/nginx
+
 # Add Nginx to PATH
 echo "export PATH=\"$INSTALL_DIR/sbin:\$PATH\"" | sudo tee "$PROFILE_FILE" > /dev/null
 chmod +x "$PROFILE_FILE"

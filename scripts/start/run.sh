@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 chmod +x ./* ./scripts/*.sh ./gpt-oss/*.sh
 
@@ -19,13 +20,18 @@ echo -e "\033[1;32m==============================\033[0m"
 echo -e "\033[1;32m   Roommate Startup Script    \033[0m"
 echo -e "\033[1;32m==============================\033[0m"
 
+# --- Kill processes using ports 3000 and 80 ---
+for PORT in 3000 80; do
+    if lsof -i :$PORT &> /dev/null; then
+        echo -e "\033[1;33m[WARN]\033[0m Port $PORT in use, killing process..."
+        lsof -i :$PORT | awk 'NR>1 {print $2}' | xargs -r kill -9
+        echo -e "\033[1;32m[OK]\033[0m Port $PORT freed."
+    fi
+done
+
 # Check dependencies
 loading_bar "[1/7] Checking dependencies..." 7
 ./scripts/check_dependencies.sh
-if [ $? -ne 0 ]; then
-        echo -e "\033[1;31m[ERROR]\033[0m Dependency check failed."
-        exit 1
-fi
 echo -e "\033[1;32m[OK]\033[0m Dependencies are satisfied."
 
 loading_bar "[EXTRA] Setting up Python venv & installing requirements..." 7
@@ -37,49 +43,36 @@ pip install -r requirements.txt
 # Run analytics
 loading_bar "[2/7] Running analytics..." 6
 python3 ./config/analytics.py
-if [ $? -ne 0 ]; then
-        echo -e "\033[1;31m[ERROR]\033[0m Analytics script failed."
-        exit 1
-fi
 echo -e "\033[1;32m[OK]\033[0m Analytics completed."
 
 # Set environment
 loading_bar "[3/7] Setting environment..." 5
 python3 ./config/set_env.py
-if [ $? -ne 0 ]; then
-        echo -e "\033[1;31m[ERROR]\033[0m Failed to set environment."
-        exit 1
-fi
 echo -e "\033[1;32m[OK]\033[0m Environment set."
 
-# Start main application
+# Start main application (Ollama included)
 loading_bar "[4/7] Starting main application..." 8
 ./gpt-oss/start.sh &
 APP_PID=$!
 echo -e "\033[1;32m[OK]\033[0m Main application started (PID $APP_PID)."
 
 # Install Node.js dependencies
-loading_bar "[5/7] Installing Node.js dependencies (server/ & sentry/ts & scheduled/)..." 10
+loading_bar "[5/7] Installing Node.js dependencies..." 10
 npm install --prefix ./server
 npm install --prefix ./sentry/ts
 npm install --prefix ./scheduled
 echo -e "\033[1;32m[OK]\033[0m Node.js dependencies installation completed."
 
+# Start Bun server
 loading_bar "[6/8] Starting the Bun Server.." 8
 BUN_CMD="bun run ./server/index.ts"
 LOG_FILE="./bun.log"
-
-# Trap SIGINT (Ctrl+C)
 trap 'echo "Ctrl+C pressed: sending Bun server to background..."; disown %1; exit 0' SIGINT
-
 echo "Starting Bun server... Logs will appear below. Press Ctrl+C to background it."
 $BUN_CMD 2>&1 | tee "$LOG_FILE" &
 
-# Wait for the backgrounded process
-wait
-
 # Install PHP dependencies (Nightwatch)
-loading_bar "[7/8] Installing PHP dependencies (nightwatch)..." 7
+loading_bar "[7/8] Installing PHP dependencies..." 7
 composer install --working-dir=./nightwatch &
 echo -e "\033[1;32m[OK]\033[0m PHP dependencies installation started."
 
@@ -90,7 +83,7 @@ echo -e "\033[1;32m[OK]\033[0m Scheduler started."
 
 # Start nginx
 loading_bar "[EXTRA] Starting nginx..." 6
-sudo /usr/sbin/nginx -c $(pwd)/nginx/nginx.conf &
+sudo /opt/nginx-1.29.1/sbin/nginx -c $(pwd)/nginx/nginx.conf &
 echo -e "\033[1;32m[OK]\033[0m Nginx started."
 
 # Start varnish
