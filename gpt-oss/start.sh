@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if ollama list | grep -E 'gpt-oss:20b|gpt-oss:20b-lora' | grep -q 'Running'; then
-  echo "gpt-oss:20b or gpt-oss:20b-lora is already running. Skipping startup."
+if ollama list | grep -E 'gpt-oss:20b-highreasoning|gpt-oss:20b-lora' | grep -q 'Running'; then
+  echo "gpt-oss:20b-highreasoning or gpt-oss:20b-lora is already running. Skipping startup."
   exit 0
 fi
 
@@ -27,6 +27,26 @@ fi
 # gpt-oss:20b Size: 14GB Context: 128K
 ollama pull gpt-oss:20b
 
+# Create high reasoning model if it does not exist
+if ! ollama list | grep -q "gpt-oss:20b-highreasoning"; then
+  cat > gpt-oss-highreasoning.modelfile <<EOF
+FROM gpt-oss:20b
+
+PARAMETER temperature 0.3
+PARAMETER top_p 0.9
+PARAMETER top_k 40
+PARAMETER repeat_penalty 1.05
+PARAMETER num_ctx 128000
+
+SYSTEM """
+Você é um modelo de raciocínio avançado.
+Sempre desenvolva o pensamento passo a passo antes de responder.
+"""
+EOF
+
+  ollama create gpt-oss:20b-highreasoning -f gpt-oss-highreasoning.modelfile
+fi
+
 TUNING_FILE="tuning_count.txt"
 if [ ! -f "$TUNING_FILE" ]; then
   echo "0" > "$TUNING_FILE"
@@ -35,9 +55,9 @@ fi
 COUNT=$(cat "$TUNING_FILE")
 
 if [ "$COUNT" -ge 1 ]; then
-  nohup ollama run gpt-oss-20b-lora > output.log 2>&1 &
+  nohup ollama run gpt-oss:20b-lora > output.log 2>&1 &
 else
-  nohup ollama run gpt-oss:20b > output.log 2>&1 &
+  nohup ollama run gpt-oss:20b-highreasoning > output.log 2>&1 &
 fi
 
 echo $! > ollama.pid

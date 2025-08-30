@@ -28,6 +28,12 @@ if [ $? -ne 0 ]; then
 fi
 echo -e "\033[1;32m[OK]\033[0m Dependencies are satisfied."
 
+loading_bar "[EXTRA] Setting up Python venv & installing requirements..." 7
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+
 # Run analytics
 loading_bar "[2/7] Running analytics..." 6
 python3 ./config/analytics.py
