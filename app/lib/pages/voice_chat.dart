@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:vosk_flutter/vosk_flutter.dart';
+import 'package:vosk_flutter_2/vosk_flutter.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:http/http.dart' as http;
 import '../api_password_manager.dart';
@@ -28,9 +28,10 @@ class VoiceChatScreen extends StatefulWidget {
 
 class _VoiceChatScreenState extends State<VoiceChatScreen> {
   // Vosk recognition components - replaces speech_to_text
-  VoskRecognizer? _recognizer;
+  Recognizer? _recognizer;
   SpeechService? _speechService;
   final VoskFlutterPlugin _vosk = VoskFlutterPlugin.instance();
+  final ModelLoader _modelLoader = ModelLoader();
   
   final FlutterTts _tts = FlutterTts();
 
@@ -66,8 +67,7 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
           : 'assets/models/vosk-model-small-en-us-0.15.zip';
       
       // Load model from assets using vosk ModelLoader
-      final modelLoader = ModelLoader();
-      final loadedModelPath = await modelLoader.loadFromAssets(modelPath);
+      final loadedModelPath = await _modelLoader.loadFromAssets(modelPath);
       
       // Create vosk model and recognizer
       final model = await _vosk.createModel(loadedModelPath);
@@ -76,7 +76,7 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
         sampleRate: 16000
       );
     } catch (e) {
-      print('Error loading vosk model: $e');
+      debugPrint('Error loading vosk model: $e');
     }
   }
 
@@ -108,7 +108,7 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
       await _speechService!.start();
       setState(() => _isListening = true);
     } catch (e) {
-      print('Error starting vosk speech recognition: $e');
+      debugPrint('Error starting vosk speech recognition: $e');
     }
   }
 

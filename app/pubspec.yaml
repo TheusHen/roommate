@@ -36,13 +36,14 @@ dependencies:
   cupertino_icons: ^1.0.8
   http: ^0.13.6
   shared_preferences: ^2.0.15
-  vosk_flutter: ^0.3.48
+  vosk_flutter_2: ^1.0.5
   flutter_tts: ^3.8.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
+  integration_test:
+    sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
