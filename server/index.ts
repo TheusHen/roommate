@@ -2,6 +2,7 @@ import { captureError } from "../sentry/ts/sentry";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import { MongoDBHandler } from "../mongodb/index";
 
 const analyticsConfigPath = path.join(__dirname, "../config/analytics_config.json");
 let analyticsOption = "None (not recommended)";
@@ -29,6 +30,21 @@ if (fs.existsSync(passwordFilePath)) {
 }
 
 console.log(`[INFO] API password for authorization: ${apiPassword}`);
+
+// Initialize MongoDB Handler
+const mongoHandler = new MongoDBHandler();
+let mongoHandlerConnected = false;
+
+async function initMongoDB() {
+  try {
+    await mongoHandler.connect();
+    mongoHandlerConnected = true;
+    console.log("[INFO] MongoDB Handler initialized successfully");
+  } catch (error) {
+    console.error("[ERROR] Failed to initialize MongoDB Handler:", error);
+    mongoHandlerConnected = false;
+  }
+}
 
 async function sendNightwatch(error: any) {
   const apiUrl = process.env.NIGHTWATCH_API_URL;
@@ -186,12 +202,60 @@ const server = Bun.serve({
 
         console.log(`[REQUEST] /chat with prompt: ${prompt}`);
 
+        // Enrich prompt with user context if MongoDB is available
+        let enrichedPrompt = prompt;
+        if (mongoHandlerConnected) {
+          try {
+            // Use a default user ID for now - in a real app this would come from authentication
+            const userId = "default-user";
+            
+            // Save any new information from the prompt
+            await mongoHandler.saveMemory(userId, prompt);
+            
+            // Get relevant memories to enrich the prompt
+            const memories = await mongoHandler.getRelevantMemory(userId, prompt);
+            
+            if (memories.length > 0) {
+              const context = memories.map(m => {
+                switch (m.type) {
+                  case 'pet':
+                    if (m.key.endsWith('_name')) {
+                      const petType = m.key.replace('_name', '');
+                      return `Your ${petType}'s name is ${m.value}`;
+                    }
+                    break;
+                  case 'personal':
+                    if (m.key === 'name') return `Your name is ${m.value}`;
+                    break;
+                  case 'location':
+                    if (m.key === 'home_location') return `You live in ${m.value}`;
+                    break;
+                  case 'work':
+                    if (m.key === 'company') return `You work at ${m.value}`;
+                    break;
+                  case 'preference':
+                    if (m.key === 'likes') return `You like ${m.value}`;
+                    break;
+                }
+                return null;
+              }).filter(Boolean).join('. ');
+              
+              if (context) {
+                enrichedPrompt = `Context about the user: ${context}.\n\nUser says: ${prompt}`;
+              }
+            }
+          } catch (memoryError) {
+            console.error("[WARN] Memory enrichment failed:", memoryError);
+            // Continue with original prompt if memory fails
+          }
+        }
+
         const ollamaResponse = await fetch("http://127.0.0.1:11434/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             model: "gpt-oss:20b",
-            messages: [{ role: "user", content: prompt }],
+            messages: [{ role: "user", content: enrichedPrompt }],
           }),
         });
 
@@ -387,6 +451,94 @@ const server = Bun.serve({
       }
     }
 
+    if (url.pathname === "/memory/save" && req.method === "POST") {
+      if (!checkAuthorization(req)) {
+        return buildResponse({ error: "Unauthorized" }, 401);
+      }
+      
+      if (!mongoHandlerConnected) {
+        return buildResponse({ error: "MongoDB Handler not available" }, 503);
+      }
+      
+      try {
+        const bodyStream = await req.text();
+        await logRequest(req, bodyStream);
+
+        let body;
+        try {
+          body = JSON.parse(bodyStream);
+        } catch (jsonErr: unknown) {
+          const errMsg = getErrorMessage(jsonErr);
+          console.error("[ERROR] JSON.parse failed:", errMsg);
+          return buildResponse({
+            error: "Failed to parse JSON",
+            details: errMsg,
+            bodyRaw: bodyStream
+          }, 400);
+        }
+
+        const { userId, sentence } = body;
+        if (!userId || !sentence) {
+          return buildResponse({ error: "Missing required fields: userId, sentence", received: body }, 400);
+        }
+
+        await mongoHandler.saveMemory(userId, sentence);
+        console.log(`[INFO] Memory saved for user ${userId}`);
+        return buildResponse({ success: true });
+        
+      } catch (err: unknown) {
+        handleError(err);
+        const errMsg = getErrorMessage(err);
+        const errStack = getErrorStack(err);
+        console.error("[ERROR] /memory/save failed:", errMsg, errStack);
+        return buildResponse({ error: errMsg, stack: errStack }, 500);
+      }
+    }
+
+    if (url.pathname === "/memory/get" && req.method === "POST") {
+      if (!checkAuthorization(req)) {
+        return buildResponse({ error: "Unauthorized" }, 401);
+      }
+      
+      if (!mongoHandlerConnected) {
+        return buildResponse({ error: "MongoDB Handler not available" }, 503);
+      }
+      
+      try {
+        const bodyStream = await req.text();
+        await logRequest(req, bodyStream);
+
+        let body;
+        try {
+          body = JSON.parse(bodyStream);
+        } catch (jsonErr: unknown) {
+          const errMsg = getErrorMessage(jsonErr);
+          console.error("[ERROR] JSON.parse failed:", errMsg);
+          return buildResponse({
+            error: "Failed to parse JSON",
+            details: errMsg,
+            bodyRaw: bodyStream
+          }, 400);
+        }
+
+        const { userId, prompt } = body;
+        if (!userId || !prompt) {
+          return buildResponse({ error: "Missing required fields: userId, prompt", received: body }, 400);
+        }
+
+        const memories = await mongoHandler.getRelevantMemory(userId, prompt);
+        console.log(`[INFO] Retrieved ${memories.length} memories for user ${userId}`);
+        return buildResponse({ memories });
+        
+      } catch (err: unknown) {
+        handleError(err);
+        const errMsg = getErrorMessage(err);
+        const errStack = getErrorStack(err);
+        console.error("[ERROR] /memory/get failed:", errMsg, errStack);
+        return buildResponse({ error: errMsg, stack: errStack }, 500);
+      }
+    }
+
     if (url.pathname === "/feedback" && req.method === "POST") {
       if (!checkAuthorization(req)) {
         return buildResponse({ error: "Unauthorized" }, 401);
@@ -443,3 +595,6 @@ const server = Bun.serve({
 });
 
 console.log(`Roommate server online!`);
+
+// Initialize MongoDB Handler
+initMongoDB().catch(console.error);
