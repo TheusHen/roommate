@@ -36,7 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   http: ^1.5.0
   shared_preferences: ^2.0.15
-  vosk_flutter_2: ^1.0.5
+  speech_to_text: ^6.6.0
   flutter_tts: ^3.8.3
 
 dev_dependencies:
@@ -62,11 +62,6 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-
-  # To add assets to your application, add an assets section, like this:
-  assets:
-    - assets/models/vosk-model-small-en-us-0.15.zip
-    - assets/models/vosk-model-small-pt-0.3.zip
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

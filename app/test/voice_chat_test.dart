@@ -64,10 +64,10 @@ void main() {
 
   group('Voice Chat Data Flow', () {
     test('should handle text recognition flow', () {
-      // This test verifies the expected data flow described in the requirements:
-      // 🎙️ microphone → vosk_flutter → text (_text) → send via HTTP → response → flutter_tts
+      // This test verifies the expected data flow:
+      // 🎙️ microphone → speech_to_text → text (_text) → send via HTTP → response → flutter_tts
       
-      // 1. Simulated vosk recognition result
+      // 1. Simulated speech recognition result
       const recognizedText = 'Hello roommate how are you';
       
       // 2. Text should be valid for processing
@@ -80,25 +80,14 @@ void main() {
       expect(apiPayload['prompt'], equals('Said: Hello roommate how are you'));
     });
 
-    test('should handle locale-specific model paths', () {
-      // Test that correct model paths are used for different locales
-      const enUsModelPath = 'assets/models/vosk-model-small-en-us-0.15.zip';
-      const ptBrModelPath = 'assets/models/vosk-model-small-pt-0.3.zip';
-      
-      // Verify model paths follow expected naming convention
-      expect(enUsModelPath, contains('en-us'));
-      expect(ptBrModelPath, contains('pt'));
-      expect(enUsModelPath, endsWith('.zip'));
-      expect(ptBrModelPath, endsWith('.zip'));
-    });
-
-    test('should handle language switching correctly', () {
-      // Test locale values match dropdown options
+    test('should handle locale settings for speech recognition', () {
+      // Test that correct locales are available
       const locales = [
         {'label': 'English', 'value': 'en-US'},
         {'label': 'Português', 'value': 'pt-BR'},
       ];
       
+      // Verify locale values are valid for speech_to_text
       expect(locales[0]['value'], equals('en-US'));
       expect(locales[1]['value'], equals('pt-BR'));
       expect(locales.length, equals(2));

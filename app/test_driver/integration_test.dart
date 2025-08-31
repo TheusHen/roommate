@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  group('Voice Chat Vosk Integration Test', () {
-    testWidgets('Complete voice chat flow with vosk_flutter', (tester) async {
+  group('Voice Chat Integration Test', () {
+    testWidgets('Complete voice chat flow with speech_to_text', (tester) async {
       // Start the app
       app.main();
       await tester.pumpAndSettle();
@@ -46,7 +46,7 @@ void main() {
       await tester.pumpAndSettle();
       
       // After tapping mic, the UI should change to listening state
-      // (In real implementation, this would trigger vosk model loading)
+      // (In real implementation, this would trigger speech_to_text)
       expect(find.text('Listening...'), findsOneWidget);
       expect(find.byIcon(Icons.stop), findsOneWidget);
 
@@ -62,14 +62,14 @@ void main() {
       expect(find.byIcon(Icons.send), findsOneWidget);
       
       // In a real test with actual speech input, the flow would be:
-      // 1. Tap mic → vosk loads model for selected locale
-      // 2. Speak → vosk processes audio → updates _text variable
+      // 1. Tap mic → speech_to_text initializes for selected locale
+      // 2. Speak → speech_to_text processes audio → updates _text variable
       // 3. Tap send → HTTP request to backend → response
       // 4. TTS speaks the response
       // 5. Message appears in history
     });
 
-    testWidgets('Language switching reloads vosk model', (tester) async {
+    testWidgets('Language switching updates locale', (tester) async {
       app.main();
       await tester.pumpAndSettle();
 
@@ -77,8 +77,8 @@ void main() {
       await tester.tap(find.text('Voice Chat'));
       await tester.pumpAndSettle();
 
-      // Test that changing language triggers model reload
-      // (In implementation, this disposes old recognizer)
+      // Test that changing language updates the locale setting
+      // (In implementation, this changes the speech_to_text locale)
       
       // Start with English (default)
       expect(find.byIcon(Icons.language), findsOneWidget);
@@ -95,30 +95,25 @@ void main() {
       await tester.tap(find.text('English'));
       await tester.pumpAndSettle();
       
-      // Each language switch should dispose the old recognizer
-      // and require loading the new model on next mic tap
+      // Each language switch should update the _selectedLocale variable
+      // which affects the speech recognition language
     });
   });
 }
 
 /*
- * Expected Vosk Integration Flow:
+ * Expected Speech Recognition Flow:
  * 
  * 1. User taps mic button
- * 2. _loadModel() called based on _selectedLocale
- *    - English: loads 'assets/models/vosk-model-small-en-us-0.15.zip'
- *    - Portuguese: loads 'assets/models/vosk-model-small-pt-0.3.zip'
- * 3. VoskRecognizer created with loaded model
- * 4. SpeechService initialized and started
- * 5. User speaks → onPartial() updates _text in real-time
- * 6. Speech ends → onResult() provides final recognized text
- * 7. User taps send → _sendToRoommate() called
- * 8. HTTP request sent to backend with recognized text
- * 9. Response received and added to history
- * 10. TTS speaks the response
+ * 2. speech_to_text initializes for _selectedLocale
+ * 3. User speaks → onResult() updates _text in real-time
+ * 4. Speech ends → final result provided
+ * 5. User taps send → _sendToRoommate() called
+ * 6. HTTP request sent to backend with recognized text
+ * 7. Response received and added to history
+ * 8. TTS speaks the response
  * 
  * Language switching:
- * - Disposes current _recognizer
- * - Sets _recognizer to null
- * - Next mic tap loads new model for selected locale
+ * - Updates _selectedLocale
+ * - Next mic tap uses new locale for speech recognition
  */
