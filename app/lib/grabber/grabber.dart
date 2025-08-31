@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../../../sentry/dart/sentry.dart';
+import '../utils/sentry.dart';
 
 /// Represents a user memory retrieved from the database
 class UserMemory {
