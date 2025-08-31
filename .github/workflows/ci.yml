@@ -198,7 +198,9 @@ jobs:
           node-version: '20'
       
       - name: Install Bun
-        run: curl -fsSL https://bun.sh/install | bash
+        run: |
+            curl -fsSL https://bun.sh/install | bash
+            echo "$HOME/.bun/bin" >> $GITHUB_PATH
 
       - name: Ensure dependencies installed for all TS/JS folders
         run: |
