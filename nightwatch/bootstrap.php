@@ -41,10 +41,15 @@ if (!class_exists('Illuminate\Validation\ValidationException')) {
     class_alias('ValidationException', 'Illuminate\Validation\ValidationException');
 }
 
-// Load our mock Laravel classes
+// Load our mock classes
+require_once 'PHPUnit/Framework/TestCase.php';
+require_once 'PHPUnit/Framework/MockObject/MockObject.php';
 require_once 'Illuminate/Http/Request.php';
 require_once 'Illuminate/Routing/Controller.php';
 require_once 'GuzzleHttp/Client.php';
+
+// Load the actual controller
+require_once 'Http/Controllers/NightwatchController.php';
 
 // Simple autoloader for our classes
 spl_autoload_register(function ($class) {
