@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../sentry/dart/sentry.dart';
 
 /// Represents a user memory retrieved from the database
 class UserMemory {
@@ -36,6 +37,32 @@ class UserMemory {
 /// Grabber class for enriching prompts with user context from MongoDB
 class Grabber {
   static const String baseUrl = 'http://localhost:3000';
+  static String _analyticsOption = 'None';
+  
+  /// Initialize error tracking for the Grabber
+  static void initErrorTracking({
+    String analyticsOption = 'None',
+    String? sentryDsn,
+    String? nightwatchApiUrl,
+    String? nightwatchApiKey,
+    String environment = 'production',
+  }) {
+    _analyticsOption = analyticsOption;
+    ErrorTracker.setAnalyticsOption(analyticsOption);
+    
+    if (sentryDsn != null && sentryDsn.isNotEmpty) {
+      SentryConfig.init(dsn: sentryDsn, environment: environment);
+    }
+    
+    if (nightwatchApiUrl != null && nightwatchApiKey != null) {
+      Nightwatch.init(apiUrl: nightwatchApiUrl, apiKey: nightwatchApiKey);
+    }
+  }
+  
+  /// Handle errors based on configured analytics option
+  static Future<void> _handleError(dynamic error) async {
+    await ErrorTracker.handleError(error);
+  }
   
   /// Enriches a prompt with relevant user information from the database
   /// 
@@ -63,6 +90,7 @@ class Grabber {
       return _enrichPromptWithContext(prompt, context);
       
     } catch (e) {
+      await _handleError(e);
       print('[Grabber] Error enriching prompt: $e');
       return prompt; // Return original prompt if enrichment fails
     }
@@ -87,6 +115,7 @@ class Grabber {
         print('[Grabber] Failed to save memory: ${response.body}');
       }
     } catch (e) {
+      await _handleError(e);
       print('[Grabber] Error saving memory: $e');
       // Don't throw - saving memory is optional
     }
@@ -116,6 +145,7 @@ class Grabber {
         return [];
       }
     } catch (e) {
+      await _handleError(e);
       print('[Grabber] Error getting memories: $e');
       return [];
     }
