@@ -2,7 +2,6 @@
 
 use PHPUnit\Framework\TestCase;
 
-// We'll create simple standalone tests that don't rely on external Laravel dependencies
 class NightwatchControllerTest extends TestCase
 {
     private $controller;
@@ -10,26 +9,21 @@ class NightwatchControllerTest extends TestCase
 
     protected function setUp(): void
     {
-        parent::setUp();
-        
-        // We'll create simple test objects without complex mocking
+        // parent::setUp() é suficiente no PHPUnit 10
         $this->mockClient = new \stdClass();
-        $this->controller = null; // Will be created in tests as needed
+        $this->controller = null;
     }
 
-    public function testControllerCanBeInstantiated()
+    public function testControllerCanBeInstantiated(): void
     {
-        // Test that we can create the controller
         $this->assertTrue(class_exists('Nightwatch\Http\Controllers\NightwatchController'));
-        
-        // Test that we can instantiate it
+
         $controller = new \Nightwatch\Http\Controllers\NightwatchController();
         $this->assertInstanceOf(\Nightwatch\Http\Controllers\NightwatchController::class, $controller);
     }
 
-    public function testValidationRulesAreCorrect()
+    public function testValidationRulesAreCorrect(): void
     {
-        // Test that validation rules are properly defined
         $expectedRules = [
             'message'        => 'nullable|string',
             'result'         => 'nullable|array', 
@@ -39,7 +33,6 @@ class NightwatchControllerTest extends TestCase
             'ping_ms'        => 'nullable|integer',
         ];
 
-        // This test verifies the expected validation structure
         $this->assertIsArray($expectedRules);
         $this->assertCount(6, $expectedRules);
         $this->assertArrayHasKey('message', $expectedRules);
@@ -47,109 +40,88 @@ class NightwatchControllerTest extends TestCase
         $this->assertArrayHasKey('elapsed_ms', $expectedRules);
     }
 
-    public function testEnvironmentConfigurationLogic()
+    public function testEnvironmentConfigurationLogic(): void
     {
-        // Test environment variable handling
         $testUrl = 'https://test.nightwatch.api';
         $testToken = 'test-token-123';
         
         putenv("NIGHTWATCH_URL={$testUrl}");
         putenv("NIGHTWATCH_TOKEN={$testToken}");
         
-        // Verify environment variables are set correctly
         $this->assertEquals($testUrl, getenv('NIGHTWATCH_URL'));
         $this->assertEquals($testToken, getenv('NIGHTWATCH_TOKEN'));
         
-        // Clean up
         putenv('NIGHTWATCH_URL');
         putenv('NIGHTWATCH_TOKEN');
     }
 
-    public function testErrorHandlingStructure()
+    public function testErrorHandlingStructure(): void
     {
-        // Test that error handling follows expected patterns
         $errorData = [
             'status' => 'error',
             'error' => 'Test error message'
         ];
-        
+
         $this->assertIsArray($errorData);
         $this->assertEquals('error', $errorData['status']);
         $this->assertArrayHasKey('error', $errorData);
     }
 
-    public function testSuccessResponseStructure()
+    public function testSuccessResponseStructure(): void
     {
-        // Test that success responses have the correct structure
         $successData = [
             'status' => 'success',
             'nightwatch_response' => ['id' => '123', 'status' => 'received']
         ];
-        
+
         $this->assertIsArray($successData);
         $this->assertEquals('success', $successData['status']);
         $this->assertArrayHasKey('nightwatch_response', $successData);
         $this->assertIsArray($successData['nightwatch_response']);
     }
 
-    public function testHttpClientConfigurationStructure()
+    public function testHttpClientConfigurationStructure(): void
     {
-        // Test that HTTP client configuration follows expected patterns
-        $headers = [
-            'Authorization' => 'Bearer test-token',
-        ];
-        
-        $options = [
-            'json' => ['error' => 'test'],
-            'headers' => $headers,
-        ];
-        
+        $headers = ['Authorization' => 'Bearer test-token'];
+        $options = ['json' => ['error' => 'test'], 'headers' => $headers];
+
         $this->assertArrayHasKey('json', $options);
         $this->assertArrayHasKey('headers', $options);
         $this->assertArrayHasKey('Authorization', $options['headers']);
         $this->assertStringStartsWith('Bearer ', $options['headers']['Authorization']);
     }
 
-    public function testDataProcessingLogic()
+    public function testDataProcessingLogic(): void
     {
-        // Test data processing and validation logic
-        $inputData = [
-            'message' => 'Test message',
-            'elapsed_ms' => 1500,
-            'ping_ms' => 50,
-        ];
-        
-        // Verify input data structure
+        $inputData = ['message' => 'Test message', 'elapsed_ms' => 1500, 'ping_ms' => 50];
+
         $this->assertIsArray($inputData);
         $this->assertIsString($inputData['message']);
         $this->assertIsInt($inputData['elapsed_ms']);
         $this->assertIsInt($inputData['ping_ms']);
     }
 
-    public function testNightwatchApiUrlConfiguration()
+    public function testNightwatchApiUrlConfiguration(): void
     {
-        // Test default and custom API URL configuration
         $defaultUrl = 'https://api.nightwatch.io/events';
         $customUrl = 'https://custom.nightwatch.test/events';
         
-        // Test default
         putenv('NIGHTWATCH_URL');
         $actualDefault = getenv('NIGHTWATCH_URL') ?: $defaultUrl;
         $this->assertEquals($defaultUrl, $actualDefault);
         
-        // Test custom
         putenv("NIGHTWATCH_URL={$customUrl}");
         $actualCustom = getenv('NIGHTWATCH_URL') ?: $defaultUrl;
         $this->assertEquals($customUrl, $actualCustom);
         
-        // Clean up
         putenv('NIGHTWATCH_URL');
     }
 
-    private function createMockResponse()
+    private function createMockResponse(): object
     {
         return new class {
-            public function getBody() {
+            public function getBody(): string
+            {
                 return json_encode(['status' => 'received', 'id' => 'test-123']);
             }
         };
