@@ -28,8 +28,8 @@ class VoiceChatScreen extends StatefulWidget {
 
 class _VoiceChatScreenState extends State<VoiceChatScreen> {
   // Vosk recognition components - replaces speech_to_text
-  SpeechService? _speechService;
-  final VoskFlutterPlugin _vosk = VoskFlutterPlugin.instance();
+  VoskFlutterPlugin? _vosk;
+  Recognizer? _recognizer;
   Model? _model;
 
   final FlutterTts _tts = FlutterTts();
@@ -56,8 +56,8 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
   @override
   void dispose() {
     // Clean up vosk resources
-    _speechService?.stop();
-    _model?.dispose();
+    _recognizer?.close();
+    _model?.close();
     _tts.stop();
     super.dispose();
   }
@@ -66,17 +66,19 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
   /// This method loads the appropriate offline STT model for the current language
   Future<void> _loadModel() async {
     try {
+      // Initialize VoskFlutterPlugin if not already done
+      _vosk ??= VoskFlutterPlugin.instance();
+      
       // Select model based on locale
       final modelPath = _selectedLocale == 'pt-BR'
           ? 'assets/models/vosk-model-small-pt-0.3.zip'
           : 'assets/models/vosk-model-small-en-us-0.15.zip';
       
-      // Load model from assets using vosk ModelLoader
-      final modelLoader = ModelLoader();
-      final loadedModelPath = await modelLoader.loadFromAssets(modelPath);
+      // Load model from assets
+      _model = await _vosk!.createModel(modelPath);
       
-      // Create vosk model
-      _model = await _vosk.createModel(loadedModelPath);
+      // Create recognizer
+      _recognizer = await _vosk!.createRecognizer(model: _model!, sampleRate: 16000);
     } catch (e) {
       debugPrint('Error loading vosk model: $e');
     }
@@ -86,28 +88,23 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
   /// This initializes the speech service and subscribes to partial and final results
   Future<void> _startListening() async {
     // Ensure model is loaded for current locale
-    if (_model == null) {
+    if (_model == null || _recognizer == null) {
       await _loadModel();
     }
     
-    if (_model == null) return;
+    if (_recognizer == null) return;
     
     try {
-      // Initialize vosk speech service with the model
-      _speechService = await _vosk.initSpeechServiceWithModel(_model!, sampleRate: 16000);
-
-      // Subscribe to partial results (updates as user speaks)
-      _speechService!.onPartial().forEach((partial) {
-        setState(() => _text = partial);
+      // Start speech recognition
+      await _vosk!.startSpeechService(_recognizer!);
+      
+      // Listen for speech results
+      _vosk!.speechResultStream?.listen((result) {
+        if (result.isNotEmpty) {
+          setState(() => _text = result);
+        }
       });
-
-      // Subscribe to final results (when speech segment is complete)
-      _speechService!.onResult().forEach((result) {
-        setState(() => _text = result);
-      });
-
-      // Start the speech recognition service
-      await _speechService!.start();
+      
       setState(() => _isListening = true);
     } catch (e) {
       debugPrint('Error starting vosk speech recognition: $e');
@@ -116,9 +113,8 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
 
   /// Stop listening and clean up speech service
   Future<void> _stopListening() async {
-    if (_speechService != null) {
-      await _speechService!.stop();
-      _speechService = null;
+    if (_vosk != null) {
+      await _vosk!.stopSpeechService();
     }
     setState(() => _isListening = false);
   }
