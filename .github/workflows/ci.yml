@@ -59,7 +59,7 @@ jobs:
       
       - name: Run server tests
         working-directory: server
-        run: npx jest index.test.ts
+        run: npx jest index.test.ts --config jest.config.cjs
 
   python-tests:
     runs-on: ubuntu-latest
@@ -123,25 +123,9 @@ jobs:
         working-directory: sentry/ts
         run: npm install
       
-      - name: Install test dependencies
-        working-directory: sentry/ts
-        run: |
-          npm install --save-dev @types/jest jest ts-jest typescript
-      
-      - name: Setup Jest config
-        working-directory: sentry/ts
-        run: |
-          cat > jest.config.js << 'EOF'
-          module.exports = {
-            preset: 'ts-jest',
-            testEnvironment: 'node',
-            testMatch: ['**/*.test.ts']
-          };
-          EOF
-      
       - name: Run TypeScript Sentry tests
         working-directory: sentry/ts
-        run: npx jest sentry.test.ts
+        run: npx jest sentry.test.ts --config jest.config.cjs
 
   scheduled-tests:
     runs-on: ubuntu-latest
@@ -165,25 +149,9 @@ jobs:
         working-directory: scheduled
         run: npm install
       
-      - name: Install test dependencies
-        working-directory: scheduled
-        run: |
-          npm install --save-dev @types/jest jest ts-jest typescript
-      
-      - name: Setup Jest config
-        working-directory: scheduled
-        run: |
-          cat > jest.config.js << 'EOF'
-          module.exports = {
-            preset: 'ts-jest',
-            testEnvironment: 'node',
-            testMatch: ['**/*.test.ts']
-          };
-          EOF
-      
       - name: Run scheduled tests
         working-directory: scheduled
-        run: npx jest index.test.ts
+        run: npx jest index.test.ts --config jest.config.cjs
         env:
           MONGODB_URI: mongodb://localhost:27017/test
 
@@ -223,15 +191,23 @@ jobs:
           - 27017:27017
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
       
-      - name: Install TypeScript globally
-        run: npm install -g typescript ts-node
-      
+      - name: Install Bun
+        run: curl -fsSL https://bun.sh/install | bash
+
+      - name: Ensure dependencies installed for all TS/JS folders
+        run: |
+          for dir in mongodb server sentry/ts scheduled; do
+            if [ -f "$dir/package.json" ]; then
+              (cd $dir && npm install)
+            fi
+          done
+
       - name: Run integration tests
         run: bun run test_integration.ts
         env:
@@ -267,8 +243,7 @@ jobs:
         run: docker build -t roommate:test .
       
       - name: Test Docker image
-        run: |
-          docker run --rm roommate:test echo "Docker build successful"
+        run: docker run --rm roommate:test echo "Docker build successful"
 
   code-quality:
     runs-on: ubuntu-latest
