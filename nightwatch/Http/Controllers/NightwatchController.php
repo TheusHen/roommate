@@ -4,9 +4,17 @@ namespace Nightwatch\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use GuzzleHttp\Client;
 
 class NightwatchController extends Controller
 {
+    private $client;
+
+    public function __construct($client = null)
+    {
+        $this->client = $client ?: new Client();
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -21,8 +29,7 @@ class NightwatchController extends Controller
         $nightwatchUrl = env('NIGHTWATCH_URL', 'https://api.nightwatch.io/events');
 
         try {
-            $client = new \GuzzleHttp\Client();
-            $response = $client->post($nightwatchUrl, [
+            $response = $this->client->post($nightwatchUrl, [
                 'json' => $data,
                 'headers' => [
                     'Authorization' => 'Bearer ' . env('NIGHTWATCH_TOKEN', ''),
