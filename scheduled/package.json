@@ -1,4 +1,9 @@
 {
+  "name": "scheduled",
+  "type": "module",
+  "scripts": {
+    "test": "jest --config jest.config.cjs"
+  },
   "dependencies": {
     "dotenv": "^17.2.1",
     "mongodb": "^6.18.0"

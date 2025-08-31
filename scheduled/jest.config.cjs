@@ -10,8 +10,11 @@ module.exports = {
     '!**/vendor/**'
   ],
   transform: {
-    '^.+\\.ts$': 'ts-jest'
+    '^.+\\.ts$': ['ts-jest', {
+      useESM: true
+    }]
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  testTimeout: 30000
+  testTimeout: 30000,
+  extensionsToTreatAsEsm: ['.ts']
 };
