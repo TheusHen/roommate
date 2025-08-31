@@ -56,7 +56,7 @@ echo ""
 if [ "$DEPLOYMENT_TYPE" = "local" ]; then
     PORTS_TO_CHECK="3000"
 elif [ "$DEPLOYMENT_TYPE" = "https" ]; then
-    PORTS_TO_CHECK="443 3000 8080"
+    PORTS_TO_CHECK="443 3000 8443"
 else
     PORTS_TO_CHECK="80 3000 8080"
 fi
