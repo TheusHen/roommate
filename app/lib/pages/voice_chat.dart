@@ -31,7 +31,7 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
   SpeechService? _speechService;
   Model? _model;
   Recognizer? _recognizer;
-  final VoskFlutterPlugin _vosk = VoskFlutterPlugin.instance();
+  VoskFlutterPlugin? _vosk;
 
   final FlutterTts _tts = FlutterTts();
 
@@ -68,6 +68,9 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
   /// This method loads the appropriate offline STT model for the current language
   Future<void> _loadModel() async {
     try {
+      // Initialize vosk plugin lazily when first needed
+      _vosk ??= VoskFlutterPlugin.instance();
+      
       // Select model based on locale
       final modelPath = _selectedLocale == 'pt-BR'
           ? 'assets/models/vosk-model-small-pt-0.3.zip'
@@ -78,7 +81,7 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
       final loadedModelPath = await modelLoader.loadFromAssets(modelPath);
 
       // Create vosk model
-      _model = await _vosk.createModel(loadedModelPath);
+      _model = await _vosk!.createModel(loadedModelPath);
     } catch (e) {
       debugPrint('Error loading vosk model: $e');
     }
@@ -96,10 +99,10 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
 
     try {
       // Create recognizer from model
-      _recognizer = await _vosk.createRecognizer(model: _model!, sampleRate: 16000);
+      _recognizer = await _vosk!.createRecognizer(model: _model!, sampleRate: 16000);
 
       // Initialize vosk speech service with the recognizer
-      _speechService = await _vosk.initSpeechService(_recognizer!);
+      _speechService = await _vosk!.initSpeechService(_recognizer!);
 
       // Subscribe to partial results (updates as user speaks)
       _speechService!.onPartial().forEach((partial) {
