@@ -233,7 +233,7 @@ jobs:
         run: npm install -g typescript ts-node
       
       - name: Run integration tests
-        run: npx ts-node test_integration.ts
+        run: bun run test_integration.ts
         env:
           MONGODB_URI: mongodb://localhost:27017/test
 
