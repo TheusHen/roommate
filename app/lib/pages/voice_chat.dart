@@ -30,6 +30,7 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
   // Vosk recognition components
   SpeechService? _speechService;
   Model? _model;
+  Recognizer? _recognizer;
   final VoskFlutterPlugin _vosk = VoskFlutterPlugin.instance();
 
   final FlutterTts _tts = FlutterTts();
@@ -57,6 +58,7 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
   void dispose() {
     // Clean up vosk resources
     _speechService?.stop();
+    _recognizer?.dispose();
     _model?.dispose();
     _tts.stop();
     super.dispose();
@@ -93,8 +95,11 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
     if (_model == null) return;
 
     try {
-      // Initialize vosk speech service with the model
-      _speechService = await _vosk.initSpeechService(_model!, sampleRate: 16000);
+      // Create recognizer from model
+      _recognizer = await _vosk.createRecognizer(model: _model!, sampleRate: 16000);
+
+      // Initialize vosk speech service with the recognizer
+      _speechService = await _vosk.initSpeechService(_recognizer!);
 
       // Subscribe to partial results (updates as user speaks)
       _speechService!.onPartial().forEach((partial) {
