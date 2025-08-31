@@ -21,6 +21,9 @@ void main() {
       } catch (e) {
         // Skip this test if vosk_flutter is not available in test environment
         // This is expected in CI/CD environments where native libraries aren't available
+        // ignore: avoid_print
+        // dart lint:avoid_print directive disables lint warning for this line
+        // ignore: avoid_print
         print('Skipping VoiceChatScreen widget test due to vosk_flutter initialization: $e');
         expect(true, isTrue); // Pass the test as the underlying issue is environmental
       }
@@ -36,11 +39,12 @@ void main() {
 
         // Find the locale dropdown
         expect(find.byIcon(Icons.language), findsOneWidget);
-        
+
         // The dropdown should be visible
         expect(find.byType(DropdownButton<String>), findsOneWidget);
       } catch (e) {
         // Skip this test if vosk_flutter is not available in test environment
+        // ignore: avoid_print
         print('Skipping locale selector test due to vosk_flutter initialization: $e');
         expect(true, isTrue); // Pass the test as the underlying issue is environmental
       }
@@ -62,6 +66,7 @@ void main() {
         // but we can verify the UI structure is correct
       } catch (e) {
         // Skip this test if vosk_flutter is not available in test environment
+        // ignore: avoid_print
         print('Skipping listening state test due to vosk_flutter initialization: $e');
         expect(true, isTrue); // Pass the test as the underlying issue is environmental
       }
@@ -77,11 +82,12 @@ void main() {
 
         // Verify send button exists
         expect(find.byIcon(Icons.send), findsOneWidget);
-        
+
         // Verify it's in the correct row with mic button
         expect(find.byType(Row), findsWidgets);
       } catch (e) {
         // Skip this test if vosk_flutter is not available in test environment
+        // ignore: avoid_print
         print('Skipping send button test due to vosk_flutter initialization: $e');
         expect(true, isTrue); // Pass the test as the underlying issue is environmental
       }
@@ -92,15 +98,15 @@ void main() {
     test('should handle text recognition flow', () {
       // This test verifies the expected data flow:
       // 🎙️ microphone → vosk_flutter → text (_text) → send via HTTP → response → flutter_tts
-      
+
       // 1. Simulated speech recognition result
       const recognizedText = 'Hello roommate how are you';
-      
+
       // 2. Text should be valid for processing
       expect(recognizedText, isNotEmpty);
       expect(recognizedText, isA<String>());
       expect(recognizedText.trim(), equals('Hello roommate how are you'));
-      
+
       // 3. Text should be ready for HTTP API call
       final apiPayload = {"prompt": "Said: ${recognizedText.trim()}"};
       expect(apiPayload['prompt'], equals('Said: Hello roommate how are you'));
@@ -112,12 +118,12 @@ void main() {
         {'label': 'English', 'value': 'en-US'},
         {'label': 'Português', 'value': 'pt-BR'},
       ];
-      
+
       // Verify locale values map to correct vosk models
       expect(locales[0]['value'], equals('en-US'));
       expect(locales[1]['value'], equals('pt-BR'));
       expect(locales.length, equals(2));
-      
+
       // Test model path selection logic
       const selectedLocale = 'pt-BR';
       final modelPath = selectedLocale == 'pt-BR'
