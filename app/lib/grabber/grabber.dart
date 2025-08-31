@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../../sentry/dart/sentry.dart';
+import '../../../sentry/dart/sentry.dart';
 
 /// Represents a user memory retrieved from the database
 class UserMemory {
@@ -37,7 +37,6 @@ class UserMemory {
 /// Grabber class for enriching prompts with user context from MongoDB
 class Grabber {
   static const String baseUrl = 'http://localhost:3000';
-  static String _analyticsOption = 'None';
   
   /// Initialize error tracking for the Grabber
   static void initErrorTracking({
@@ -47,7 +46,6 @@ class Grabber {
     String? nightwatchApiKey,
     String environment = 'production',
   }) {
-    _analyticsOption = analyticsOption;
     ErrorTracker.setAnalyticsOption(analyticsOption);
     
     if (sentryDsn != null && sentryDsn.isNotEmpty) {
@@ -223,8 +221,6 @@ class Grabber {
   
   /// Get direct answer from context for simple questions
   static String _getDirectAnswer(String lowerPrompt, String context) {
-    final lowerContext = context.toLowerCase();
-    
     if (lowerPrompt.contains('dog') && lowerPrompt.contains('name')) {
       final dogNameMatch = RegExp(r"your dog's name is (\w+)", caseSensitive: false)
           .firstMatch(context);
