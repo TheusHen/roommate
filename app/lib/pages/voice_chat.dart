@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:vosk_flutter/vosk_flutter.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:http/http.dart' as http;
 import '../api_password_manager.dart';
@@ -27,7 +27,12 @@ class VoiceChatScreen extends StatefulWidget {
 }
 
 class _VoiceChatScreenState extends State<VoiceChatScreen> {
-  final stt.SpeechToText _speech = stt.SpeechToText();
+  // Vosk recognition components
+  SpeechService? _speechService;
+  Model? _model;
+  Recognizer? _recognizer;
+  VoskFlutterPlugin? _vosk;
+
   final FlutterTts _tts = FlutterTts();
 
   bool _isListening = false;
@@ -44,30 +49,85 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
   final Map<int, String?> _feedbacks = {}; // index -> feedback ("positive"|"negative")
 
   @override
+  void initState() {
+    super.initState();
+    // Vosk models are loaded on-demand when starting speech recognition
+  }
+
+  @override
   void dispose() {
-    _speech.stop();
+    // Clean up vosk resources
+    _speechService?.stop();
+    _recognizer?.dispose();
+    _model?.dispose();
     _tts.stop();
     super.dispose();
   }
 
-  Future<void> _startListening() async {
-    bool available = await _speech.initialize();
-    if (available) {
-      setState(() => _isListening = true);
-      await _speech.listen(
-        localeId: _selectedLocale,
-        listenMode: stt.ListenMode.dictation,
-        onResult: (result) {
-          setState(() {
-            _text = result.recognizedWords;
-          });
-        },
-      );
+  /// Load Vosk model based on selected locale
+  /// This method loads the appropriate offline STT model for the current language
+  Future<void> _loadModel() async {
+    try {
+      // Initialize vosk plugin lazily when first needed
+      _vosk ??= VoskFlutterPlugin.instance();
+      
+      // Select model based on locale
+      final modelPath = _selectedLocale == 'pt-BR'
+          ? 'assets/models/vosk-model-small-pt-0.3.zip'
+          : 'assets/models/vosk-model-small-en-us-0.15.zip';
+
+      // Load model from assets using vosk ModelLoader
+      final modelLoader = ModelLoader();
+      final loadedModelPath = await modelLoader.loadFromAssets(modelPath);
+
+      // Create vosk model
+      _model = await _vosk!.createModel(loadedModelPath);
+    } catch (e) {
+      debugPrint('Error loading vosk model: $e');
     }
   }
 
+  /// Start listening for speech using Vosk offline recognition
+  /// This initializes the speech service and subscribes to partial and final results
+  Future<void> _startListening() async {
+    // Ensure model is loaded for current locale
+    if (_model == null) {
+      await _loadModel();
+    }
+
+    if (_model == null) return;
+
+    try {
+      // Create recognizer from model
+      _recognizer = await _vosk!.createRecognizer(model: _model!, sampleRate: 16000);
+
+      // Initialize vosk speech service with the recognizer
+      _speechService = await _vosk!.initSpeechService(_recognizer!);
+
+      // Subscribe to partial results (updates as user speaks)
+      _speechService!.onPartial().forEach((partial) {
+        setState(() => _text = partial);
+      });
+
+      // Subscribe to final results (when speech segment is complete)
+      _speechService!.onResult().forEach((result) {
+        setState(() => _text = result);
+      });
+
+      // Start the speech recognition service
+      await _speechService!.start();
+      setState(() => _isListening = true);
+    } catch (e) {
+      debugPrint('Error starting vosk speech recognition: $e');
+    }
+  }
+
+  /// Stop listening and clean up speech service
   Future<void> _stopListening() async {
-    await _speech.stop();
+    if (_speechService != null) {
+      await _speechService!.stop();
+      _speechService = null;
+    }
     setState(() => _isListening = false);
   }
 
@@ -161,7 +221,9 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
             color: Colors.grey[100],
             child: ListTile(
               leading: const Icon(Icons.hearing, color: Colors.deepPurple),
-              title: Text(_isListening ? 'Listening...' : 'Tap mic to speak'),
+              title: Text(_isListening 
+                  ? 'Listening...' 
+                  : 'Tap mic to speak'),
               subtitle: Text(_text),
             ),
           ),

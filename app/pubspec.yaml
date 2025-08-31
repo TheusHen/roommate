@@ -34,15 +34,16 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  http: ^1.5.0
+  http: ^0.13.6
   shared_preferences: ^2.0.15
-  speech_to_text: ^5.0.3
-  flutter_tts: ^3.8.5
+  vosk_flutter: ^0.3.48
+  flutter_tts: ^3.8.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
+  integration_test:
+    sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -63,9 +64,9 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/models/vosk-model-small-en-us-0.15.zip
+    - assets/models/vosk-model-small-pt-0.3.zip
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
