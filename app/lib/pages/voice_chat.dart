@@ -20,7 +20,7 @@ class VoiceMessage {
 }
 
 class VoiceChatScreen extends StatefulWidget {
-  const VoiceChatScreen({Key? key}) : super(key: key);
+  const VoiceChatScreen({super.key});
 
   @override
   State<VoiceChatScreen> createState() => _VoiceChatScreenState();
