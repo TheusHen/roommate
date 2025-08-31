@@ -28,10 +28,10 @@ class VoiceChatScreen extends StatefulWidget {
 
 class _VoiceChatScreenState extends State<VoiceChatScreen> {
   // Vosk recognition components - replaces speech_to_text
-  VoskRecognizer? _recognizer;
   SpeechService? _speechService;
   final VoskFlutterPlugin _vosk = VoskFlutterPlugin.instance();
-  
+  Model? _model;
+
   final FlutterTts _tts = FlutterTts();
 
   bool _isListening = false;
@@ -57,7 +57,7 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
   void dispose() {
     // Clean up vosk resources
     _speechService?.stop();
-    _recognizer?.dispose();
+    _model?.dispose();
     _tts.stop();
     super.dispose();
   }
@@ -75,12 +75,8 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
       final modelLoader = ModelLoader();
       final loadedModelPath = await modelLoader.loadFromAssets(modelPath);
       
-      // Create vosk model and recognizer
-      final model = await _vosk.createModel(loadedModelPath);
-      _recognizer = await _vosk.createRecognizer(
-        model: model, 
-        sampleRate: 16000
-      );
+      // Create vosk model
+      _model = await _vosk.createModel(loadedModelPath);
     } catch (e) {
       debugPrint('Error loading vosk model: $e');
     }
@@ -90,15 +86,15 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
   /// This initializes the speech service and subscribes to partial and final results
   Future<void> _startListening() async {
     // Ensure model is loaded for current locale
-    if (_recognizer == null) {
+    if (_model == null) {
       await _loadModel();
     }
     
-    if (_recognizer == null) return;
+    if (_model == null) return;
     
     try {
-      // Initialize vosk speech service with the recognizer
-      _speechService = await _vosk.initSpeechService(_recognizer!);
+      // Initialize vosk speech service with the model
+      _speechService = await _vosk.initSpeechServiceWithModel(_model!, sampleRate: 16000);
 
       // Subscribe to partial results (updates as user speaks)
       _speechService!.onPartial().forEach((partial) {
