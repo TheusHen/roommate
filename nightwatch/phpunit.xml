@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.0/phpunit.xsd"
+         bootstrap="bootstrap.php"
+         colors="true"
+         processIsolation="false"
+         stopOnFailure="false">
+    <testsuites>
+        <testsuite name="Unit">
+            <directory suffix="Test.php">./tests</directory>
+        </testsuite>
+    </testsuites>
+    <coverage>
+        <include>
+            <directory suffix=".php">./Http</directory>
+        </include>
+    </coverage>
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="NIGHTWATCH_URL" value="https://api.nightwatch.test/events"/>
+        <env name="NIGHTWATCH_TOKEN" value="test-token"/>
+    </php>
+</phpunit>

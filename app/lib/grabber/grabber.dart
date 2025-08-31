@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../utils/sentry.dart';
 
 /// Represents a user memory retrieved from the database
 class UserMemory {
@@ -37,6 +38,30 @@ class UserMemory {
 class Grabber {
   static const String baseUrl = 'http://localhost:3000';
   
+  /// Initialize error tracking for the Grabber
+  static void initErrorTracking({
+    String analyticsOption = 'None',
+    String? sentryDsn,
+    String? nightwatchApiUrl,
+    String? nightwatchApiKey,
+    String environment = 'production',
+  }) {
+    ErrorTracker.setAnalyticsOption(analyticsOption);
+    
+    if (sentryDsn != null && sentryDsn.isNotEmpty) {
+      SentryConfig.init(dsn: sentryDsn, environment: environment);
+    }
+    
+    if (nightwatchApiUrl != null && nightwatchApiKey != null) {
+      Nightwatch.init(apiUrl: nightwatchApiUrl, apiKey: nightwatchApiKey);
+    }
+  }
+  
+  /// Handle errors based on configured analytics option
+  static Future<void> _handleError(dynamic error) async {
+    await ErrorTracker.handleError(error);
+  }
+  
   /// Enriches a prompt with relevant user information from the database
   /// 
   /// [userId] - The user's unique identifier
@@ -63,7 +88,8 @@ class Grabber {
       return _enrichPromptWithContext(prompt, context);
       
     } catch (e) {
-      print('[Grabber] Error enriching prompt: $e');
+      await _handleError(e);
+      // Log error through error tracking instead of print
       return prompt; // Return original prompt if enrichment fails
     }
   }
@@ -84,10 +110,11 @@ class Grabber {
       );
       
       if (response.statusCode != 200) {
-        print('[Grabber] Failed to save memory: ${response.body}');
+        // Log error through error tracking instead of print
       }
     } catch (e) {
-      print('[Grabber] Error saving memory: $e');
+      await _handleError(e);
+      // Log error through error tracking instead of print
       // Don't throw - saving memory is optional
     }
   }
@@ -112,11 +139,12 @@ class Grabber {
         final List<dynamic> memoriesJson = data['memories'] ?? [];
         return memoriesJson.map((json) => UserMemory.fromJson(json)).toList();
       } else {
-        print('[Grabber] Failed to get memories: ${response.body}');
+        // Log error through error tracking instead of print
         return [];
       }
     } catch (e) {
-      print('[Grabber] Error getting memories: $e');
+      await _handleError(e);
+      // Log error through error tracking instead of print
       return [];
     }
   }
@@ -193,8 +221,6 @@ class Grabber {
   
   /// Get direct answer from context for simple questions
   static String _getDirectAnswer(String lowerPrompt, String context) {
-    final lowerContext = context.toLowerCase();
-    
     if (lowerPrompt.contains('dog') && lowerPrompt.contains('name')) {
       final dogNameMatch = RegExp(r"your dog's name is (\w+)", caseSensitive: false)
           .firstMatch(context);

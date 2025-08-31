@@ -1,5 +1,5 @@
-import { test, expect, beforeAll, afterAll, describe } from 'bun:test';
-import { MongoDBHandler, UserMemory } from './index';
+import { jest, test, expect, beforeAll, afterAll, describe } from '@jest/globals';
+import { MongoDBHandler } from './index';
 
 describe('MongoDBHandler', () => {
   let handler: MongoDBHandler;

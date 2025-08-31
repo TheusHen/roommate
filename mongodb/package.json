@@ -1,15 +1,21 @@
 {
   "name": "mongodb-handler",
   "version": "1.0.0",
+  "type": "module",
   "description": "MongoDB handler for user memory storage and retrieval",
   "main": "index.ts",
   "scripts": {
-    "test": "bun test",
+    "test": "jest",
+    "test:jest": "jest",
+    "test:bun": "bun test",
     "dev": "bun run --watch index.ts",
     "build": "bun build index.ts --outdir ./dist"
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "@types/jest": "^30.0.0",
+    "jest": "^30.1.1",
+    "ts-jest": "^29.4.1",
     "typescript": "^5.9.2"
   },
   "dependencies": {

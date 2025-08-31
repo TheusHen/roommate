@@ -4,8 +4,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../api_password_manager.dart';
 
-const FEEDBACK_URL = "http://localhost:3000/feedback";
-const API_URL = "http://localhost:3000/chat";
+const feedbackUrl = "http://localhost:3000/feedback";
+const apiUrl = "http://localhost:3000/chat";
 
 class ChatMessage {
   final String text;
@@ -14,14 +14,16 @@ class ChatMessage {
 }
 
 class ChatRoommateScreen extends StatefulWidget {
+  const ChatRoommateScreen({super.key});
+
   @override
-  _ChatRoommateScreenState createState() => _ChatRoommateScreenState();
+  ChatRoommateScreenState createState() => ChatRoommateScreenState();
 }
 
-class _ChatRoommateScreenState extends State<ChatRoommateScreen> {
+class ChatRoommateScreenState extends State<ChatRoommateScreen> {
   final TextEditingController _controller = TextEditingController();
   final List<ChatMessage> _messages = [];
-  Map<int, String?> _feedbacks = {}; // index -> feedback
+  final Map<int, String?> _feedbacks = {}; // index -> feedback
   bool _loading = false;
 
   Future<void> _sendMessage() async {
@@ -37,7 +39,7 @@ class _ChatRoommateScreenState extends State<ChatRoommateScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse(API_URL),
+        Uri.parse(apiUrl),
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $apiPassword",
@@ -85,7 +87,7 @@ class _ChatRoommateScreenState extends State<ChatRoommateScreen> {
     final apiPassword = await ApiPasswordManager.getPassword();
 
     await http.post(
-      Uri.parse(FEEDBACK_URL),
+      Uri.parse(feedbackUrl),
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer $apiPassword",

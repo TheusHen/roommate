@@ -1,0 +1,19 @@
+{
+  "name": "roommate-integration",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Roommate project integration tests",
+  "scripts": {
+    "test:integration": "tsx test_integration.ts",
+    "test:integration:ts-node": "node --loader ts-node/esm test_integration.ts"
+  },
+  "dependencies": {
+    "mongodb": "^6.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.4",
+    "typescript": "^5.9.2"
+  }
+}

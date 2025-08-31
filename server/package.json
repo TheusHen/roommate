@@ -1,8 +1,15 @@
 {
   "name": "server",
+  "type": "module",
   "module": "index.ts",
+  "scripts": {
+    "test": "jest --config jest.config.cjs"
+  },
   "devDependencies": {
     "@types/bun": "latest",
+    "@types/jest": "^30.0.0",
+    "jest": "^30.1.1",
+    "ts-jest": "^29.4.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.4",
     "typescript": "^5.9.2"
@@ -11,6 +18,8 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "mongodb": "^6.18.0"
+    "mongodb": "^6.18.0",
+    "@sentry/node": "^10.5.0",
+    "dotenv": "^17.2.1"
   }
 }

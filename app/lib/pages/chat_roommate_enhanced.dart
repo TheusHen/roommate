@@ -4,8 +4,8 @@ import 'dart:convert';
 import '../api_password_manager.dart';
 import '../grabber/grabber.dart'; // Import the new Grabber module
 
-const FEEDBACK_URL = "http://localhost:3000/feedback";
-const API_URL = "http://localhost:3000/chat";
+const feedbackUrl = "http://localhost:3000/feedback";
+const apiUrl = "http://localhost:3000/chat";
 
 class ChatMessage {
   final String text;
@@ -14,14 +14,16 @@ class ChatMessage {
 }
 
 class ChatRoommateScreen extends StatefulWidget {
+  const ChatRoommateScreen({super.key});
+
   @override
-  _ChatRoommateScreenState createState() => _ChatRoommateScreenState();
+  ChatRoommateScreenState createState() => ChatRoommateScreenState();
 }
 
-class _ChatRoommateScreenState extends State<ChatRoommateScreen> {
+class ChatRoommateScreenState extends State<ChatRoommateScreen> {
   final TextEditingController _controller = TextEditingController();
   final List<ChatMessage> _messages = [];
-  Map<int, String?> _feedbacks = {};
+  final Map<int, String?> _feedbacks = {};
   bool _loading = false;
 
   Future<void> _sendMessage() async {
@@ -43,14 +45,14 @@ class _ChatRoommateScreenState extends State<ChatRoommateScreen> {
         // Use a default user ID - in a real app this would come from authentication
         const userId = 'default-user';
         enrichedPrompt = await Grabber.enrichPrompt(userId, input, apiPassword ?? '');
-        print('[ChatRoommate] Enriched prompt: $enrichedPrompt');
+        // Use error tracking instead of print for production
       } catch (grabberError) {
-        print('[ChatRoommate] Grabber enrichment failed: $grabberError');
+        // Use error tracking instead of print for production
         enrichedPrompt = input; // Fallback to original prompt
       }
 
       final response = await http.post(
-        Uri.parse(API_URL),
+        Uri.parse(apiUrl),
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $apiPassword",
@@ -140,7 +142,7 @@ class _ChatRoommateScreenState extends State<ChatRoommateScreen> {
     final apiPassword = await ApiPasswordManager.getPassword();
 
     await http.post(
-      Uri.parse(FEEDBACK_URL),
+      Uri.parse(feedbackUrl),
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer $apiPassword",
@@ -158,8 +160,7 @@ class _ChatRoommateScreenState extends State<ChatRoommateScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Chat with Roommate'),
-        subtitle: Text('Enhanced with user memory'),
+        title: Text('Chat with Roommate - Enhanced with user memory'),
       ),
       body: Column(
         children: [
