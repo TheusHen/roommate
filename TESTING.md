@@ -283,4 +283,54 @@ If you encounter issues:
 1. Check the CI/CD logs for detailed error messages
 2. Run tests locally with verbose output
 3. Verify all environment variables are configured
+
+## Integration Testing
+
+### Running the Integration Test
+
+The project includes a comprehensive integration test (`test_integration.ts`) that validates the end-to-end functionality of the MongoDB Handler and Grabber components without requiring a running MongoDB instance.
+
+#### Prerequisites
+
+From the project root directory, install the dependencies:
+
+```bash
+npm install
+```
+
+#### Running the Test
+
+There are multiple ways to run the integration test:
+
+**Method 1: Using tsx (recommended)**
+```bash
+npm run test:integration
+```
+
+**Method 2: Using ts-node with ESM**
+```bash
+npm run test:integration:ts-node
+```
+
+**Method 3: Direct execution**
+```bash
+npx tsx test_integration.ts
+```
+
+#### What the Integration Test Covers
+
+1. **MongoDB Handler Pattern Recognition** - Tests sentence parsing and memory extraction
+2. **Query Analysis** - Tests keyword extraction and type guessing from user queries
+3. **Grabber Context Building** - Tests context creation from stored memories
+4. **Server Integration** - Tests memory enrichment for chat endpoints
+
+#### Expected Output
+
+The test will show:
+- ✅ Pattern recognition working
+- ✅ Context building working  
+- ✅ Memory enrichment working
+- ✅ End-to-end ready for production
+
+The integration test is designed to run independently without external dependencies, making it perfect for CI/CD pipelines and local development testing.
 4. Ensure all dependencies are properly installed
