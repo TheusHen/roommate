@@ -17,13 +17,13 @@ class ChatRoommateScreen extends StatefulWidget {
   const ChatRoommateScreen({super.key});
 
   @override
-  _ChatRoommateScreenState createState() => _ChatRoommateScreenState();
+  ChatRoommateScreenState createState() => ChatRoommateScreenState();
 }
 
-class _ChatRoommateScreenState extends State<ChatRoommateScreen> {
+class ChatRoommateScreenState extends State<ChatRoommateScreen> {
   final TextEditingController _controller = TextEditingController();
   final List<ChatMessage> _messages = [];
-  Map<int, String?> _feedbacks = {}; // index -> feedback
+  final Map<int, String?> _feedbacks = {}; // index -> feedback
   bool _loading = false;
 
   Future<void> _sendMessage() async {

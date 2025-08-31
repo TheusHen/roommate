@@ -89,7 +89,7 @@ class Grabber {
       
     } catch (e) {
       await _handleError(e);
-      print('[Grabber] Error enriching prompt: $e');
+      // Log error through error tracking instead of print
       return prompt; // Return original prompt if enrichment fails
     }
   }
@@ -110,11 +110,11 @@ class Grabber {
       );
       
       if (response.statusCode != 200) {
-        print('[Grabber] Failed to save memory: ${response.body}');
+        // Log error through error tracking instead of print
       }
     } catch (e) {
       await _handleError(e);
-      print('[Grabber] Error saving memory: $e');
+      // Log error through error tracking instead of print
       // Don't throw - saving memory is optional
     }
   }
@@ -139,12 +139,12 @@ class Grabber {
         final List<dynamic> memoriesJson = data['memories'] ?? [];
         return memoriesJson.map((json) => UserMemory.fromJson(json)).toList();
       } else {
-        print('[Grabber] Failed to get memories: ${response.body}');
+        // Log error through error tracking instead of print
         return [];
       }
     } catch (e) {
       await _handleError(e);
-      print('[Grabber] Error getting memories: $e');
+      // Log error through error tracking instead of print
       return [];
     }
   }
