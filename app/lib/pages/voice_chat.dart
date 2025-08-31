@@ -1,11 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:vosk_flutter/vosk_flutter.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:http/http.dart' as http;
 import '../api_password_manager.dart';
-
-// Use speech_to_text as fallback since vosk_flutter_2 API is causing issues
-import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 const String apiUrl = "http://localhost:3000/chat";
 const String feedbackUrl = "http://localhost:3000/feedback";
@@ -29,15 +27,16 @@ class VoiceChatScreen extends StatefulWidget {
 }
 
 class _VoiceChatScreenState extends State<VoiceChatScreen> {
-  // Speech recognition components
-  final stt.SpeechToText _speech = stt.SpeechToText();
+  // Vosk recognition components - replaces speech_to_text
+  VoskRecognizer? _recognizer;
+  SpeechService? _speechService;
+  final VoskFlutterPlugin _vosk = VoskFlutterPlugin.instance();
   
   final FlutterTts _tts = FlutterTts();
 
   bool _isListening = false;
   String _text = '';
   bool _loading = false;
-  bool _speechAvailable = false;
 
   String _selectedLocale = 'en-US';
   final List<Map<String, String>> _locales = [
@@ -51,64 +50,79 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
   @override
   void initState() {
     super.initState();
-    _initSpeech();
-  }
-
-  /// Initialize speech recognition
-  Future<void> _initSpeech() async {
-    _speechAvailable = await _speech.initialize(
-      onStatus: (status) {
-        if (status == 'done' || status == 'notListening') {
-          setState(() => _isListening = false);
-        }
-      },
-      onError: (errorNotification) {
-        debugPrint('Speech recognition error: ${errorNotification.errorMsg}');
-        setState(() => _isListening = false);
-      },
-    );
-    setState(() {});
+    // Vosk models are loaded on-demand when starting speech recognition
   }
 
   @override
   void dispose() {
-    _speech.stop();
+    // Clean up vosk resources
+    _speechService?.stop();
+    _recognizer?.dispose();
     _tts.stop();
     super.dispose();
   }
 
-  /// Start listening for speech using speech_to_text
+  /// Load Vosk model based on selected locale
+  /// This method loads the appropriate offline STT model for the current language
+  Future<void> _loadModel() async {
+    try {
+      // Select model based on locale
+      final modelPath = _selectedLocale == 'pt-BR'
+          ? 'assets/models/vosk-model-small-pt-0.3.zip'
+          : 'assets/models/vosk-model-small-en-us-0.15.zip';
+      
+      // Load model from assets using vosk ModelLoader
+      final modelLoader = ModelLoader();
+      final loadedModelPath = await modelLoader.loadFromAssets(modelPath);
+      
+      // Create vosk model and recognizer
+      final model = await _vosk.createModel(loadedModelPath);
+      _recognizer = await _vosk.createRecognizer(
+        model: model, 
+        sampleRate: 16000
+      );
+    } catch (e) {
+      debugPrint('Error loading vosk model: $e');
+    }
+  }
+
+  /// Start listening for speech using Vosk offline recognition
+  /// This initializes the speech service and subscribes to partial and final results
   Future<void> _startListening() async {
-    if (!_speechAvailable) return;
+    // Ensure model is loaded for current locale
+    if (_recognizer == null) {
+      await _loadModel();
+    }
+    
+    if (_recognizer == null) return;
     
     try {
-      await _speech.listen(
-        onResult: (result) {
-          setState(() {
-            _text = result.recognizedWords;
-            if (result.finalResult) {
-              _isListening = false;
-            }
-          });
-        },
-        localeId: _selectedLocale,
-        listenFor: const Duration(seconds: 30),
-        pauseFor: const Duration(seconds: 5),
-        partialResults: true,
-        cancelOnError: true,
-      );
+      // Initialize vosk speech service with the recognizer
+      _speechService = await _vosk.initSpeechService(_recognizer!);
+
+      // Subscribe to partial results (updates as user speaks)
+      _speechService!.onPartial().forEach((partial) {
+        setState(() => _text = partial);
+      });
+
+      // Subscribe to final results (when speech segment is complete)
+      _speechService!.onResult().forEach((result) {
+        setState(() => _text = result);
+      });
+
+      // Start the speech recognition service
+      await _speechService!.start();
       setState(() => _isListening = true);
     } catch (e) {
-      debugPrint('Error starting speech recognition: $e');
+      debugPrint('Error starting vosk speech recognition: $e');
     }
   }
 
   /// Stop listening and clean up speech service
   Future<void> _stopListening() async {
-    try {
-      await _speech.stop();
-    } catch (e) {
-      debugPrint('Error stopping speech recognition: $e');
+    if (_speechService != null) {
+      await _speechService!.stop();
+      _speechService = null;
     }
     setState(() => _isListening = false);
   }
@@ -205,9 +219,7 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
               leading: const Icon(Icons.hearing, color: Colors.deepPurple),
               title: Text(_isListening 
                   ? 'Listening...' 
-                  : _speechAvailable 
-                      ? 'Tap mic to speak'
-                      : 'Speech not available'),
+                  : 'Tap mic to speak'),
               subtitle: Text(_text),
             ),
           ),
@@ -215,12 +227,10 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
         IconButton(
           icon: Icon(
             _isListening ? Icons.stop : Icons.mic,
-            color: _speechAvailable ? Colors.deepPurple : Colors.grey,
+            color: Colors.deepPurple,
             size: 32,
           ),
-          onPressed: _speechAvailable 
-              ? (_isListening ? _stopListening : _startListening)
-              : null,
+          onPressed: _isListening ? _stopListening : _startListening,
         ),
         IconButton(
           icon: const Icon(Icons.send, color: Colors.blue, size: 32),

@@ -65,7 +65,7 @@ void main() {
   group('Voice Chat Data Flow', () {
     test('should handle text recognition flow', () {
       // This test verifies the expected data flow:
-      // 🎙️ microphone → speech_to_text → text (_text) → send via HTTP → response → flutter_tts
+      // 🎙️ microphone → vosk_flutter → text (_text) → send via HTTP → response → flutter_tts
       
       // 1. Simulated speech recognition result
       const recognizedText = 'Hello roommate how are you';
@@ -80,17 +80,24 @@ void main() {
       expect(apiPayload['prompt'], equals('Said: Hello roommate how are you'));
     });
 
-    test('should handle locale settings for speech recognition', () {
+    test('should handle locale settings for vosk models', () {
       // Test that correct locales are available
       const locales = [
         {'label': 'English', 'value': 'en-US'},
         {'label': 'Português', 'value': 'pt-BR'},
       ];
       
-      // Verify locale values are valid for speech_to_text
+      // Verify locale values map to correct vosk models
       expect(locales[0]['value'], equals('en-US'));
       expect(locales[1]['value'], equals('pt-BR'));
       expect(locales.length, equals(2));
+      
+      // Test model path selection logic
+      const selectedLocale = 'pt-BR';
+      final modelPath = selectedLocale == 'pt-BR'
+          ? 'assets/models/vosk-model-small-pt-0.3.zip'
+          : 'assets/models/vosk-model-small-en-us-0.15.zip';
+      expect(modelPath, equals('assets/models/vosk-model-small-pt-0.3.zip'));
     });
   });
 }
