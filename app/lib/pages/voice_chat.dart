@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:vosk_flutter/vosk_flutter.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:http/http.dart' as http;
 import '../api_password_manager.dart';
@@ -27,7 +27,11 @@ class VoiceChatScreen extends StatefulWidget {
 }
 
 class _VoiceChatScreenState extends State<VoiceChatScreen> {
-  final stt.SpeechToText _speech = stt.SpeechToText();
+  // Vosk recognition components - replaces speech_to_text
+  VoskRecognizer? _recognizer;
+  SpeechService? _speechService;
+  final VoskFlutterPlugin _vosk = VoskFlutterPlugin.instance();
+  
   final FlutterTts _tts = FlutterTts();
 
   bool _isListening = false;
@@ -45,29 +49,75 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
 
   @override
   void dispose() {
-    _speech.stop();
+    // Clean up vosk resources
+    _speechService?.stop();
+    _recognizer?.dispose();
     _tts.stop();
     super.dispose();
   }
 
-  Future<void> _startListening() async {
-    bool available = await _speech.initialize();
-    if (available) {
-      setState(() => _isListening = true);
-      await _speech.listen(
-        localeId: _selectedLocale,
-        listenMode: stt.ListenMode.dictation,
-        onResult: (result) {
-          setState(() {
-            _text = result.recognizedWords;
-          });
-        },
+  /// Load Vosk model based on selected locale
+  /// This method loads the appropriate offline STT model for the current language
+  Future<void> _loadModel() async {
+    try {
+      // Select model based on locale
+      final modelPath = _selectedLocale == 'pt-BR'
+          ? 'assets/models/vosk-model-small-pt-0.3.zip'
+          : 'assets/models/vosk-model-small-en-us-0.15.zip';
+      
+      // Load model from assets using vosk ModelLoader
+      final modelLoader = ModelLoader();
+      final loadedModelPath = await modelLoader.loadFromAssets(modelPath);
+      
+      // Create vosk model and recognizer
+      final model = await _vosk.createModel(loadedModelPath);
+      _recognizer = await _vosk.createRecognizer(
+        model: model, 
+        sampleRate: 16000
       );
+    } catch (e) {
+      print('Error loading vosk model: $e');
     }
   }
 
+  /// Start listening for speech using Vosk offline recognition
+  /// This initializes the speech service and subscribes to partial and final results
+  Future<void> _startListening() async {
+    // Ensure model is loaded for current locale
+    if (_recognizer == null) {
+      await _loadModel();
+    }
+    
+    if (_recognizer == null) return;
+    
+    try {
+      // Initialize vosk speech service with the recognizer
+      _speechService = await _vosk.initSpeechService(_recognizer!);
+
+      // Subscribe to partial results (updates as user speaks)
+      _speechService!.onPartial().forEach((partial) {
+        setState(() => _text = partial);
+      });
+
+      // Subscribe to final results (when speech segment is complete)
+      _speechService!.onResult().forEach((result) {
+        setState(() => _text = result);
+      });
+
+      // Start the speech recognition service
+      await _speechService!.start();
+      setState(() => _isListening = true);
+    } catch (e) {
+      print('Error starting vosk speech recognition: $e');
+    }
+  }
+
+  /// Stop listening and clean up speech service
   Future<void> _stopListening() async {
-    await _speech.stop();
+    if (_speechService != null) {
+      await _speechService!.stop();
+      _speechService = null;
+    }
     setState(() => _isListening = false);
   }
 
@@ -146,6 +196,9 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
       onChanged: (val) {
         setState(() {
           _selectedLocale = val ?? 'en-US';
+          // When locale changes, we need to reload the model
+          _recognizer?.dispose();
+          _recognizer = null;
         });
       },
       icon: const Icon(Icons.language),
