@@ -8,9 +8,12 @@
     "strict": true,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "types": [
-      "bun-types"
+      "bun-types",
+      "jest",
+      "node"
     ]
   }
 }
