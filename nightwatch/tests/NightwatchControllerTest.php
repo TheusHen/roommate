@@ -1,7 +1,6 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\MockObject\MockObject;
 
 // We'll create simple standalone tests that don't rely on external Laravel dependencies
 class NightwatchControllerTest extends TestCase
