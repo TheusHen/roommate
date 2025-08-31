@@ -1,6 +1,26 @@
 import { MongoDBHandler } from '../mongodb/index';
 
+// Mock sentry module to avoid dependency issues
+jest.mock('../sentry/ts/sentry', () => ({
+  captureError: jest.fn()
+}));
+
+// Mock mongodb module
+jest.mock('../mongodb/index', () => ({
+  MongoDBHandler: jest.fn().mockImplementation(() => ({
+    connect: jest.fn().mockResolvedValue(undefined),
+    saveMemory: jest.fn().mockResolvedValue(undefined),
+    getRelevantMemory: jest.fn().mockResolvedValue([])
+  }))
+}));
+
+// Mock Bun runtime
+global.Bun = {
+  serve: jest.fn().mockReturnValue({ port: 3000 })
+} as any;
+
 // Mock fetch for testing
+// @ts-ignore - Bun's fetch type has additional properties we don't need for testing
 global.fetch = jest.fn();
 
 describe('Server Error Handling', () => {
@@ -9,7 +29,7 @@ describe('Server Error Handling', () => {
   });
 
   test('should handle Nightwatch error reporting', async () => {
-    const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
+    const mockFetch = global.fetch as jest.MockedFunction<any>;
     mockFetch.mockResolvedValueOnce({
       ok: true,
       status: 200,
@@ -19,7 +39,7 @@ describe('Server Error Handling', () => {
     process.env.NIGHTWATCH_API_KEY = 'test-key';
 
     // Import the sendNightwatch function from server
-    const { sendNightwatch } = await import('../index');
+    const { sendNightwatch } = await import('./index');
     
     const testError = new Error('Test error');
     await sendNightwatch(testError);
@@ -38,12 +58,12 @@ describe('Server Error Handling', () => {
   });
 
   test('should skip Nightwatch when not configured', async () => {
-    const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
+    const mockFetch = global.fetch as jest.MockedFunction<any>;
     
     delete process.env.NIGHTWATCH_API_URL;
     delete process.env.NIGHTWATCH_API_KEY;
 
-    const { sendNightwatch } = await import('../index');
+    const { sendNightwatch } = await import('./index');
     
     const testError = new Error('Test error');
     await sendNightwatch(testError);
@@ -51,8 +71,8 @@ describe('Server Error Handling', () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  test('should verify CORS headers are applied', () => {
-    const { corsHeaders } = require('../index');
+  test('should verify CORS headers are applied', async () => {
+    const { corsHeaders } = await import('./index');
     
     const headers = corsHeaders();
     
@@ -63,29 +83,46 @@ describe('Server Error Handling', () => {
     });
   });
 
-  test('should validate authorization header', () => {
-    const { checkAuthorization } = require('../index');
+  test('should validate authorization header', async () => {
+    // Create a temporary config directory and password file for testing
+    const fs = await import('fs');
+    const path = await import('path');
+    const configDir = path.join(process.cwd(), '../config');
+    const passwordFile = path.join(configDir, 'api_password.txt');
+    
+    // Ensure config directory exists
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir, { recursive: true });
+    }
+    
+    // Write test password
+    fs.writeFileSync(passwordFile, 'test-password');
+    
+    // Re-import the module to pick up the test password
+    jest.resetModules();
+    const { checkAuthorization } = await import('./index');
     
     // Mock request with valid auth
     const validReq = {
       headers: {
         get: jest.fn().mockReturnValue('Bearer test-password')
       }
-    };
+    } as unknown as Request;
     
     // Mock request with invalid auth
     const invalidReq = {
       headers: {
         get: jest.fn().mockReturnValue('Bearer wrong-password')
       }
-    };
-    
-    // Note: This test would need the actual API password to work properly
-    // In a real test environment, you'd set a known test password
-    process.env.API_PASSWORD = 'test-password';
+    } as unknown as Request;
     
     expect(checkAuthorization(validReq)).toBe(true);
     expect(checkAuthorization(invalidReq)).toBe(false);
+    
+    // Clean up
+    if (fs.existsSync(passwordFile)) {
+      fs.unlinkSync(passwordFile);
+    }
   });
 });
 
@@ -93,14 +130,15 @@ describe('Server MongoDB Integration', () => {
   test('should handle MongoDB connection errors gracefully', async () => {
     const mockConsoleError = jest.spyOn(console, 'error').mockImplementation();
     
-    // Mock MongoDB connection failure
-    jest.mock('../mongodb/index', () => ({
+    // Reset modules and create a new mock that throws an error
+    jest.resetModules();
+    jest.doMock('../mongodb/index', () => ({
       MongoDBHandler: jest.fn().mockImplementation(() => ({
         connect: jest.fn().mockRejectedValue(new Error('Connection failed'))
       }))
     }));
 
-    const { initMongoDB } = await import('../index');
+    const { initMongoDB } = await import('./index');
     await initMongoDB();
 
     expect(mockConsoleError).toHaveBeenCalledWith(
@@ -114,14 +152,15 @@ describe('Server MongoDB Integration', () => {
   test('should initialize MongoDB successfully', async () => {
     const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation();
     
-    // Mock successful MongoDB connection
-    jest.mock('../mongodb/index', () => ({
+    // Reset modules and create a successful mock
+    jest.resetModules();
+    jest.doMock('../mongodb/index', () => ({
       MongoDBHandler: jest.fn().mockImplementation(() => ({
         connect: jest.fn().mockResolvedValue(undefined)
       }))
     }));
 
-    const { initMongoDB } = await import('../index');
+    const { initMongoDB } = await import('./index');
     await initMongoDB();
 
     expect(mockConsoleLog).toHaveBeenCalledWith(

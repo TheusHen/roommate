@@ -598,3 +598,6 @@ console.log(`Roommate server online!`);
 
 // Initialize MongoDB Handler
 initMongoDB().catch(console.error);
+
+// Export functions for testing
+export { sendNightwatch, initMongoDB, handleError, checkAuthorization, corsHeaders };

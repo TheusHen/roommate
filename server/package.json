@@ -2,6 +2,9 @@
   "name": "server",
   "type": "module",
   "module": "index.ts",
+  "scripts": {
+    "test": "jest --config jest.config.cjs"
+  },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/jest": "^30.0.0",
@@ -15,6 +18,8 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "mongodb": "^6.18.0"
+    "mongodb": "^6.18.0",
+    "@sentry/node": "^10.5.0",
+    "dotenv": "^17.2.1"
   }
 }
