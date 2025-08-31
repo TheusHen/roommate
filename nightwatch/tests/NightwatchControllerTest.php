@@ -9,7 +9,6 @@ class NightwatchControllerTest extends TestCase
 
     protected function setUp(): void
     {
-        // parent::setUp() é suficiente no PHPUnit 10
         $this->mockClient = new \stdClass();
         $this->controller = null;
     }
