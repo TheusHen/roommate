@@ -393,7 +393,7 @@ class ChatRoommateScreenState extends State<ChatRoommateScreen> {
           gradient: LinearGradient(
             colors: [
               theme.colorScheme.surface,
-              theme.colorScheme.surfaceVariant.withOpacity(0.3),
+              theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -494,7 +494,7 @@ class ChatRoommateScreenState extends State<ChatRoommateScreen> {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                  color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(25),
                   border: Border.all(
                     color: theme.colorScheme.outline.withOpacity(0.2),

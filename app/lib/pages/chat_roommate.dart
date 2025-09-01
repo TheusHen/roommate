@@ -156,8 +156,8 @@ class ChatRoommateScreenState extends State<ChatRoommateScreen> {
                           )
                         : LinearGradient(
                             colors: [
-                              theme.colorScheme.surfaceVariant,
-                              theme.colorScheme.surfaceVariant.withOpacity(0.8),
+                              theme.colorScheme.surfaceContainerHighest,
+                              theme.colorScheme.surfaceContainerHighest.withOpacity(0.8),
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -339,7 +339,7 @@ class ChatRoommateScreenState extends State<ChatRoommateScreen> {
           gradient: LinearGradient(
             colors: [
               theme.colorScheme.surface,
-              theme.colorScheme.surfaceVariant.withOpacity(0.3),
+              theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -377,7 +377,7 @@ class ChatRoommateScreenState extends State<ChatRoommateScreen> {
                 margin: const EdgeInsets.all(16),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceVariant.withOpacity(0.7),
+                  color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.7),
                   borderRadius: BorderRadius.circular(25),
                   boxShadow: [
                     BoxShadow(
@@ -441,7 +441,7 @@ class ChatRoommateScreenState extends State<ChatRoommateScreen> {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                  color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(25),
                   border: Border.all(
                     color: theme.colorScheme.outline.withOpacity(0.2),

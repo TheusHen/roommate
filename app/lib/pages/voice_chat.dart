@@ -195,8 +195,6 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
   }
 
   Widget _buildLocaleSelector() {
-    final theme = Theme.of(context);
-    
     return DropdownButton<String>(
       value: _selectedLocale,
       items: _locales
@@ -232,8 +230,8 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            theme.colorScheme.surfaceVariant,
-            theme.colorScheme.surfaceVariant.withOpacity(0.8),
+            theme.colorScheme.surfaceContainerHighest,
+            theme.colorScheme.surfaceContainerHighest.withOpacity(0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -469,7 +467,7 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.surfaceVariant,
+                                color: theme.colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -713,7 +711,7 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
           gradient: LinearGradient(
             colors: [
               theme.colorScheme.surface,
-              theme.colorScheme.surfaceVariant.withOpacity(0.3),
+              theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
