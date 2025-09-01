@@ -118,6 +118,222 @@ graph TD
 - **State Management**: Provider/Riverpod
 - **HTTP Client**: Dio
 - **Local Storage**: Hive/SQLite
+
+### 2. Data Flow Architecture
+
+```mermaid
+sequenceDiagram
+    participant U as 👤 User
+    participant F as 📱 Flutter App
+    participant N as 🌐 Nginx
+    participant S as 🖥️ Server
+    participant G as 🧠 Grabber
+    participant M as 🗄️ MongoDB
+    participant A as 🤖 AI Service
+    
+    U->>F: Send Message
+    F->>N: POST /chat
+    N->>S: Forward Request
+    S->>G: Extract Context
+    G->>M: Query Memories
+    M-->>G: Return Relevant Data
+    G-->>S: Enhanced Prompt
+    S->>A: AI Processing
+    A-->>S: AI Response
+    S->>M: Save New Memories
+    S-->>N: Return Response
+    N-->>F: Forward Response
+    F-->>U: Display Message
+```
+
+### 3. Memory System Architecture
+
+```mermaid
+graph TB
+    subgraph "📝 Memory Input Processing"
+        A[User Message] --> B[Pattern Recognition]
+        B --> C{Information Detected?}
+        C -->|Yes| D[Extract Key-Value Pairs]
+        C -->|No| E[Pass Through]
+        D --> F[Categorize Information]
+    end
+    
+    subgraph "🗄️ Storage Layer"
+        F --> G[MongoDB Collection]
+        G --> H[(User Memories)]
+        H --> I[Type: pet, location, work, etc.]
+        H --> J[Key: specific attribute]
+        H --> K[Value: actual data]
+        H --> L[Timestamp: when stored]
+    end
+    
+    subgraph "🔍 Retrieval & Context"
+        M[New User Query] --> N[Keyword Extraction]
+        N --> O[Relevance Matching]
+        O --> G
+        G --> P[Retrieved Memories]
+        P --> Q[Context Building]
+        Q --> R[Enhanced Prompt]
+    end
+    
+    style A fill:#e1f5fe
+    style G fill:#e8f5e8
+    style R fill:#fff3e0
+```
+
+### 4. IoT Integration Architecture
+
+```mermaid
+graph TB
+    subgraph "🏠 Physical Devices"
+        A[🌡️ Temperature Sensors]
+        B[💡 Smart Lights]
+        C[🚪 Door Sensors]
+        D[📷 Cameras]
+        E[🔊 Speakers]
+    end
+    
+    subgraph "🔌 Device Hub Layer"
+        F[ESP32 Hub 1]
+        G[ESP32 Hub 2]
+        H[ESP32 Hub N]
+    end
+    
+    subgraph "📡 Communication Protocol"
+        I[WiFi Network]
+        J[WebSocket Connection]
+        K[MQTT Broker]
+    end
+    
+    subgraph "🖥️ Server Processing"
+        L[IoT Handler]
+        M[Device Registry]
+        N[Automation Engine]
+        O[Data Analytics]
+    end
+    
+    subgraph "🤖 Intelligence Layer"
+        P[Pattern Analysis]
+        Q[Behavioral Learning]
+        R[Predictive Automation]
+        S[Voice Integration]
+    end
+    
+    A --> F
+    B --> F
+    C --> G
+    D --> G
+    E --> H
+    
+    F --> I
+    G --> I
+    H --> I
+    
+    I --> J
+    I --> K
+    
+    J --> L
+    K --> L
+    
+    L --> M
+    L --> N
+    L --> O
+    
+    O --> P
+    P --> Q
+    Q --> R
+    N --> S
+    
+    style F fill:#fff3e0
+    style L fill:#e8f5e8
+    style R fill:#ffebee
+```
+
+### 5. Security Architecture
+
+```mermaid
+graph TD
+    subgraph "🔐 Authentication Layer"
+        A[API Password] --> B[Request Validation]
+        B --> C{Valid Credentials?}
+        C -->|Yes| D[Grant Access]
+        C -->|No| E[Deny Access]
+    end
+    
+    subgraph "🛡️ Data Protection"
+        F[User Data] --> G[Encryption at Rest]
+        G --> H[MongoDB Encryption]
+        F --> I[Encryption in Transit]
+        I --> J[HTTPS/WSS]
+    end
+    
+    subgraph "👥 Privacy Controls"
+        K[User Consent] --> L[Data Collection]
+        L --> M[Memory Storage]
+        M --> N[Data Retention Policies]
+        N --> O[User Data Control]
+    end
+    
+    subgraph "🚨 Monitoring & Alerting"
+        P[Sentry Integration] --> Q[Error Tracking]
+        Q --> R[Security Alerts]
+        R --> S[Incident Response]
+    end
+    
+    D --> F
+    O --> P
+    
+    style C fill:#fff3e0
+    style H fill:#e8f5e8
+    style S fill:#ffebee
+```
+
+### 6. Deployment Architecture
+
+```mermaid
+graph TB
+    subgraph "🐳 Containerization"
+        A[Docker Compose] --> B[Server Container]
+        A --> C[MongoDB Container]
+        A --> D[Nginx Container]
+        A --> E[Varnish Container]
+    end
+    
+    subgraph "☁️ Cloud Deployment"
+        F[Load Balancer] --> G[Server Instances]
+        G --> H[Database Cluster]
+        G --> I[Cache Layer]
+        G --> J[File Storage]
+    end
+    
+    subgraph "📊 Monitoring Stack"
+        K[Health Checks] --> L[Prometheus Metrics]
+        L --> M[Grafana Dashboards]
+        L --> N[Alert Manager]
+    end
+    
+    subgraph "🔄 CI/CD Pipeline"
+        O[GitHub Actions] --> P[Build & Test]
+        P --> Q[Container Registry]
+        Q --> R[Automated Deployment]
+    end
+    
+    B --> G
+    C --> H
+    D --> F
+    E --> I
+    
+    G --> K
+    H --> K
+    
+    O --> A
+    R --> F
+    
+    style A fill:#e1f5fe
+    style F fill:#fff3e0
+    style K fill:#e8f5e8
+    style O fill:#ffebee
+```
 - **Voice**: speech_to_text, flutter_tts
 
 #### Web Interface

@@ -2,7 +2,83 @@
 
 This guide helps you diagnose and resolve common issues with the Roommate system.
 
+## 🔍 Diagnostic Flow
+
+```mermaid
+graph TD
+    A[🚨 Issue Reported] --> B{What Component?}
+    B -->|Server| C[🖥️ Server Diagnostics]
+    B -->|Database| D[🗄️ Database Diagnostics]
+    B -->|Client| E[📱 Client Diagnostics]
+    B -->|IoT| F[🏠 IoT Diagnostics]
+    B -->|Network| G[🌐 Network Diagnostics]
+    
+    C --> C1[Check Port 3000]
+    C --> C2[Verify API Password]
+    C --> C3[Check Logs]
+    C1 --> H{Issue Resolved?}
+    C2 --> H
+    C3 --> H
+    
+    D --> D1[MongoDB Connection]
+    D --> D2[Memory Collection]
+    D --> D3[Data Integrity]
+    D1 --> H
+    D2 --> H
+    D3 --> H
+    
+    E --> E1[App Installation]
+    E --> E2[Network Connectivity]
+    E --> E3[Authentication]
+    E1 --> H
+    E2 --> H
+    E3 --> H
+    
+    F --> F1[Device Connection]
+    F --> F2[Sensor Readings]
+    F --> F3[WebSocket Status]
+    F1 --> H
+    F2 --> H
+    F3 --> H
+    
+    G --> G1[DNS Resolution]
+    G --> G2[Firewall Rules]
+    G --> G3[SSL Certificates]
+    G1 --> H
+    G2 --> H
+    G3 --> H
+    
+    H -->|Yes| I[✅ Issue Resolved]
+    H -->|No| J[📞 Advanced Support]
+    
+    style A fill:#ffebee
+    style I fill:#e8f5e8
+    style J fill:#fff3e0
+```
+
 ## 🚨 Quick Diagnostic Tools
+
+### System Health Check Flow
+
+```mermaid
+sequenceDiagram
+    participant U as 👤 User
+    participant D as 🔍 Diagnostic Script
+    participant S as 🖥️ Server
+    participant DB as 🗄️ MongoDB
+    participant N as 🌐 Network
+    
+    U->>D: Run diagnostic script
+    D->>N: Check network connectivity
+    N-->>D: Network status
+    D->>S: Check server health
+    S-->>D: Server status
+    D->>DB: Test database connection
+    DB-->>D: Database status
+    D->>S: Test API endpoints
+    S-->>D: API responses
+    D-->>U: Generate diagnostic report
+```
 
 ### Automated Diagnostics
 ```bash

@@ -48,6 +48,59 @@ graph TD
     A[📥 Clone Repository] --> B{Choose Installation Method}
     B -->|Recommended| C[🚀 Automated Setup]
     B -->|Alternative| D[🐳 Docker Setup]
+    B -->|Manual| E[🔧 Manual Setup]
+    
+    C --> F[📦 Install Dependencies]
+    F --> G[🔧 Configure Environment]
+    G --> H[🗄️ Setup Database]
+    H --> I[🚀 Start Services]
+    I --> J[✅ System Ready]
+    
+    D --> K[🐳 Build Containers]
+    K --> L[🔄 Start Docker Compose]
+    L --> M[⚙️ Container Health Check]
+    M --> J
+    
+    E --> N[📦 Manual Dependencies]
+    N --> O[⚙️ Manual Configuration]
+    O --> P[🗄️ Manual Database Setup]
+    P --> Q[🔧 Manual Service Start]
+    Q --> J
+    
+    J --> R[🌐 Access Web Interface]
+    J --> S[📱 Connect Mobile App]
+    J --> T[🏠 Setup IoT Devices]
+    
+    style A fill:#e1f5fe
+    style C fill:#e8f5e8
+    style J fill:#fff3e0
+    style R fill:#ffebee
+```
+
+### Setup Verification Flow
+
+```mermaid
+sequenceDiagram
+    participant U as 👤 User
+    participant S as 🚀 Setup Script
+    participant DB as 🗄️ MongoDB
+    participant SRV as 🖥️ Server
+    participant UI as 🌐 Web Interface
+    
+    U->>S: Run setup script
+    S->>S: Check prerequisites
+    S->>DB: Install & start MongoDB
+    S->>SRV: Install dependencies
+    S->>SRV: Configure environment
+    S->>SRV: Start server
+    SRV-->>S: Server ready
+    S->>UI: Launch web interface
+    UI-->>U: Display login page
+    U->>UI: Access application
+    UI->>SRV: Health check
+    SRV-->>UI: System status OK
+    UI-->>U: Welcome to Roommate!
+```
     B -->|Advanced| E[⚙️ Manual Setup]
     
     C --> F[📋 Check Dependencies]
