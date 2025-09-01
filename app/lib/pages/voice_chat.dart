@@ -195,12 +195,21 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
   }
 
   Widget _buildLocaleSelector() {
+    final theme = Theme.of(context);
+    
     return DropdownButton<String>(
       value: _selectedLocale,
       items: _locales
           .map((loc) => DropdownMenuItem<String>(
                 value: loc['value'],
-                child: Text(loc['label'] ?? ''),
+                child: Text(
+                  loc['label'] ?? '',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ))
           .toList(),
       onChanged: (val) {
@@ -208,141 +217,547 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
           _selectedLocale = val ?? 'en-US';
         });
       },
-      icon: const Icon(Icons.language),
-      underline: Container(height: 1, color: Colors.grey),
+      icon: const Icon(Icons.language_rounded, color: Colors.white, size: 20),
+      underline: Container(),
+      dropdownColor: Colors.deepPurple.shade700,
     );
   }
 
   Widget _buildInputControls() {
-    return Row(
-      children: [
-        Expanded(
-          child: Card(
-            color: Colors.grey[100],
-            child: ListTile(
-              leading: const Icon(Icons.hearing, color: Colors.deepPurple),
-              title: Text(_isListening 
-                  ? 'Listening...' 
-                  : 'Tap mic to speak'),
-              subtitle: Text(_text),
+    final theme = Theme.of(context);
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            theme.colorScheme.surfaceVariant,
+            theme.colorScheme.surfaceVariant.withOpacity(0.8),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: _isListening 
+                            ? Colors.red.withOpacity(0.2)
+                            : Colors.deepPurple.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.hearing_rounded,
+                        color: _isListening ? Colors.red : Colors.deepPurple,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      _isListening ? 'Listening...' : 'Tap mic to speak',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+                if (_text.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: theme.colorScheme.outline.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Text(
+                      _text,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: theme.colorScheme.onSurface,
+                        fontStyle: _isListening ? FontStyle.italic : FontStyle.normal,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-        ),
-        IconButton(
-          icon: Icon(
-            _isListening ? Icons.stop : Icons.mic,
-            color: Colors.deepPurple,
-            size: 32,
+          const SizedBox(width: 16),
+          Column(
+            children: [
+              AnimatedScale(
+                duration: const Duration(milliseconds: 200),
+                scale: _isListening ? 1.1 : 1.0,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _isListening ? _stopListening : _startListening,
+                    borderRadius: BorderRadius.circular(25),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: _isListening 
+                              ? [Colors.red, Colors.red.withOpacity(0.8)]
+                              : [Colors.deepPurple, Colors.deepPurple.withOpacity(0.8)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: (_isListening ? Colors.red : Colors.deepPurple)
+                                .withOpacity(0.4),
+                            blurRadius: _isListening ? 12 : 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        _isListening ? Icons.stop_rounded : Icons.mic_rounded,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              AnimatedScale(
+                duration: const Duration(milliseconds: 150),
+                scale: _loading ? 0.9 : 1.0,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _loading ? null : _sendToRoommate,
+                    borderRadius: BorderRadius.circular(25),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            theme.colorScheme.primary,
+                            theme.colorScheme.primary.withOpacity(0.8),
+                          ],
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: theme.colorScheme.primary.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.send_rounded,
+                        color: theme.colorScheme.onPrimary,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          onPressed: _isListening ? _stopListening : _startListening,
-        ),
-        IconButton(
-          icon: const Icon(Icons.send, color: Colors.blue, size: 32),
-          onPressed: _loading ? null : _sendToRoommate,
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildHistory() {
+    final theme = Theme.of(context);
+    
     return Expanded(
       child: ListView.separated(
         reverse: true,
+        padding: const EdgeInsets.all(16),
         itemCount: _history.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        separatorBuilder: (_, __) => const SizedBox(height: 16),
         itemBuilder: (context, idx) {
           final index = _history.length - 1 - idx;
           final item = _history[index];
           final feedback = _feedbacks[index];
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Card(
-                color: Colors.white,
-                child: ListTile(
-                  leading: const Icon(Icons.person, color: Colors.blue),
-                  title: const Text('You',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(item.userPrompt),
-                  trailing: Text(
-                    "${item.timestamp.hour.toString().padLeft(2, '0')}:${item.timestamp.minute.toString().padLeft(2, '0')}",
-                    style: const TextStyle(color: Colors.grey),
+          
+          return TweenAnimationBuilder<double>(
+            duration: Duration(milliseconds: 400 + (idx * 50)),
+            tween: Tween(begin: 0.0, end: 1.0),
+            curve: Curves.easeOutBack,
+            builder: (context, value, child) {
+              return Transform.translate(
+                offset: Offset(0, 30 * (1 - value)),
+                child: Opacity(
+                  opacity: value,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // User message
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.person_rounded,
+                                color: theme.colorScheme.primary,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      theme.colorScheme.primary,
+                                      theme.colorScheme.primary.withOpacity(0.8),
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  item.userPrompt,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    color: theme.colorScheme.onPrimary,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surfaceVariant,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                "${item.timestamp.hour.toString().padLeft(2, '0')}:${item.timestamp.minute.toString().padLeft(2, '0')}",
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      // Roommate response
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.secondaryContainer,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.smart_toy_rounded,
+                                color: theme.colorScheme.onSecondaryContainer,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      theme.colorScheme.secondaryContainer,
+                                      theme.colorScheme.secondaryContainer.withOpacity(0.8),
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  item.roommateResponse,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    color: theme.colorScheme.onSecondaryContainer,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () => _speak(item.roommateResponse),
+                                borderRadius: BorderRadius.circular(20),
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.deepPurple.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Icon(
+                                    Icons.volume_up_rounded,
+                                    color: Colors.deepPurple,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      // Feedback buttons
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        margin: const EdgeInsets.only(left: 52),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            _buildFeedbackButton(
+                              icon: Icons.thumb_up_rounded,
+                              isSelected: feedback == "positive",
+                              selectedColor: Colors.green,
+                              onPressed: feedback == null
+                                  ? () => _sendFeedback(index, "positive")
+                                  : null,
+                              tooltip: 'Helpful response',
+                            ),
+                            const SizedBox(width: 12),
+                            _buildFeedbackButton(
+                              icon: Icons.thumb_down_rounded,
+                              isSelected: feedback == "negative",
+                              selectedColor: Colors.red,
+                              onPressed: feedback == null
+                                  ? () => _sendFeedback(index, "negative")
+                                  : null,
+                              tooltip: 'Needs improvement',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              Card(
-                color: Colors.blue[50],
-                child: ListTile(
-                  leading: const Icon(Icons.smart_toy, color: Colors.blue),
-                  title: const Text('Roommate',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(item.roommateResponse),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.volume_up, color: Colors.deepPurple),
-                    tooltip: 'Listen',
-                    onPressed: () => _speak(item.roommateResponse),
-                  ),
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.thumb_up,
-                        color: feedback == "positive"
-                            ? Colors.green
-                            : Colors.grey),
-                    tooltip: 'Positive Feedback',
-                    onPressed: feedback == null
-                        ? () => _sendFeedback(index, "positive")
-                        : null,
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.thumb_down,
-                        color: feedback == "negative"
-                            ? Colors.red
-                            : Colors.grey),
-                    tooltip: 'Negative Feedback',
-                    onPressed: feedback == null
-                        ? () => _sendFeedback(index, "negative")
-                        : null,
-                  ),
-                ],
-              ),
-            ],
+              );
+            },
           );
         },
       ),
     );
   }
 
+  Widget _buildFeedbackButton({
+    required IconData icon,
+    required bool isSelected,
+    required Color selectedColor,
+    required VoidCallback? onPressed,
+    required String tooltip,
+  }) {
+    final theme = Theme.of(context);
+    
+    return AnimatedScale(
+      duration: const Duration(milliseconds: 150),
+      scale: isSelected ? 1.1 : 1.0,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(20),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isSelected 
+                  ? selectedColor.withOpacity(0.1)
+                  : theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isSelected 
+                    ? selectedColor.withOpacity(0.3)
+                    : theme.colorScheme.outline.withOpacity(0.2),
+                width: 1,
+              ),
+              boxShadow: isSelected ? [
+                BoxShadow(
+                  color: selectedColor.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ] : [],
+            ),
+            child: Icon(
+              icon,
+              size: 18,
+              color: isSelected 
+                  ? selectedColor
+                  : theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.deepPurple,
+                Colors.deepPurple.withOpacity(0.8),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
         title: Row(
-          children: const [
-            Icon(Icons.mic),
-            SizedBox(width: 8),
-            Text('Voice Chat with Roommate'),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.mic_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Voice Chat',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 20,
+              ),
+            ),
           ],
         ),
         actions: [
-          _buildLocaleSelector(),
+          Container(
+            margin: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: _buildLocaleSelector(),
+          ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(12.0),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.surface,
+              theme.colorScheme.surfaceVariant.withOpacity(0.3),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
         child: Column(
           children: [
+            const SizedBox(height: 16),
             _buildInputControls(),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
             if (_loading)
-              const Padding(
-                padding: EdgeInsets.all(8.0),
-                child: LinearProgressIndicator(),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(25),
+                  border: Border.all(
+                    color: Colors.deepPurple.withOpacity(0.2),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.deepPurple),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Processing voice input...',
+                      style: TextStyle(
+                        color: Colors.deepPurple,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            const Divider(),
+            const SizedBox(height: 8),
             _buildHistory(),
           ],
         ),
