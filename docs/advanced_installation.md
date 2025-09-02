@@ -6,7 +6,6 @@ This guide covers manual and advanced setup for the Roommate project, including 
 - **Python 3.11+**
 - **Node.js 20+**
 - **Bun**
-- **Flutter 3.24+**
 - **PHP 8.2+**
 - **MongoDB**
 - **Nginx**
@@ -30,14 +29,14 @@ Or install manually:
 ```sh
 cd mongodb && bun install
 cd ../server && bun install
-cd ../app && flutter pub get
+cd ../web && npm install
 cd ../nightwatch && composer install
 ```
 
 ### 3. Start Services
 - **MongoDB**: `docker run -d -p 27017:27017 mongo`
 - **Server**: `cd server && bun run index.ts`
-- **Flutter App**: `cd app && flutter run`
+- **Web App**: `cd web && npm run dev`
 - **Nightwatch (PHP)**: `cd nightwatch && ./vendor/bin/phpunit tests/NightwatchControllerTest.php`
 
 ### 4. Docker Setup

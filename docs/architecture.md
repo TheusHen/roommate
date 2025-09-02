@@ -21,7 +21,6 @@ graph TB
     end
     
     subgraph "📱 Client Applications"
-        FLUTTER[📱 Flutter Mobile App]
         WEB[🌐 Web Interface]
         ESP32[🔌 ESP32 Firmware]
     end
@@ -46,14 +45,12 @@ graph TB
         GPT[🤖 GPT-OSS Integration]
     end
     
-    UI --> FLUTTER
     UI --> WEB
     UI --> ESP32
     API --> NGINX
     IOT --> ESP32
-    VOICE --> FLUTTER
+    VOICE --> WEB
     
-    FLUTTER --> NGINX
     WEB --> NGINX
     ESP32 --> NGINX
     
@@ -86,12 +83,12 @@ graph TB
 
 ### 1. Frontend Layer
 
-#### Flutter Mobile Application
+#### Web Interface
 ```mermaid
 graph TD
-    A[📱 Flutter App] --> B[🎨 UI Components]
+    A[🌐 Web App] --> B[🎨 UI Components]
     A --> C[🔌 HTTP Client]
-    A --> D[🧠 Context Grabber]
+    A --> D[🧠 Context Integration]
     A --> E[🎤 Voice Handler]
     A --> F[📦 State Management]
     
@@ -100,7 +97,7 @@ graph TD
     B --> I[📊 Analytics View]
     
     C --> J[🔌 API Service]
-    C --> K[🗄️ Local Storage]
+    C --> K[💾 Local Storage]
     
     D --> L[📝 Memory Integration]
     D --> M[🤖 AI Context]
@@ -114,25 +111,26 @@ graph TD
 ```
 
 **Technologies:**
-- **Framework**: Flutter 3.24+ (Dart)
-- **State Management**: Provider/Riverpod
-- **HTTP Client**: Dio
-- **Local Storage**: Hive/SQLite
+- **Framework**: React with Next.js
+- **Language**: TypeScript/JavaScript
+- **HTTP Client**: Fetch API
+- **Local Storage**: localStorage/sessionStorage
+- **Voice**: Web Speech API
 
 ### 2. Data Flow Architecture
 
 ```mermaid
 sequenceDiagram
     participant U as 👤 User
-    participant F as 📱 Flutter App
+    participant W as 🌐 Web App
     participant N as 🌐 Nginx
     participant S as 🖥️ Server
     participant G as 🧠 Grabber
     participant M as 🗄️ MongoDB
     participant A as 🤖 AI Service
     
-    U->>F: Send Message
-    F->>N: POST /chat
+    U->>W: Send Message
+    W->>N: POST /chat
     N->>S: Forward Request
     S->>G: Extract Context
     G->>M: Query Memories
@@ -142,8 +140,8 @@ sequenceDiagram
     A-->>S: AI Response
     S->>M: Save New Memories
     S-->>N: Return Response
-    N-->>F: Forward Response
-    F-->>U: Display Message
+    N-->>W: Forward Response
+    W-->>U: Display Message
 ```
 
 ### 3. Memory System Architecture
@@ -334,12 +332,12 @@ graph TB
     style K fill:#e8f5e8
     style O fill:#ffebee
 ```
-- **Voice**: speech_to_text, flutter_tts
+- **Voice**: Web Speech API
 
 #### Web Interface
-- **Static Files**: HTML, CSS, JavaScript
-- **Framework**: Vanilla JS (lightweight)
-- **Features**: Chat interface, admin panel, monitoring dashboard
+- **Framework**: React with Next.js
+- **Language**: TypeScript/JavaScript  
+- **Features**: Chat interface, admin panel, monitoring dashboard, responsive design
 
 #### ESP32 IoT Integration
 - **Language**: C++
@@ -603,7 +601,7 @@ graph LR
     B --> E[🌐 Nginx Container]
     B --> F[⚡ Redis Container]
     
-    G[📱 Flutter App] --> H[🔗 Local API]
+    G[🌐 Web App] --> H[🔗 Local API]
     H --> E
     
     style A fill:#e1f5fe

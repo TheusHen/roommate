@@ -10,9 +10,9 @@ Roommate uses a comprehensive test suite covering all major components.
 ## Module-Specific Tests
 - **MongoDB Handler**: `cd mongodb && bun test`
 - **Server**: `cd server && npx jest index.test.ts`
+- **Web App**: `cd web && npm test`
 - **Scheduled Module**: `cd scheduled && npx jest index.test.ts`
 - **Sentry (TypeScript)**: `cd sentry/ts && npx jest sentry.test.ts`
-- **Flutter App**: `cd app && flutter test`
 - **Fine-tuning (Python)**: `cd fine-tuning && python -m pytest test_fine.py`
 - **PHP Nightwatch**: `cd nightwatch && ./vendor/bin/phpunit tests/NightwatchControllerTest.php`
 - **Integration**: `bun run test_integration.ts`
@@ -21,7 +21,7 @@ Roommate uses a comprehensive test suite covering all major components.
 - All tests run automatically on PRs and pushes (see `.github/workflows/ci.yml`).
 
 ## Coverage & Quality
-- Linting: ESLint (TypeScript), flake8/black (Python), flutter analyze (Dart)
+- Linting: ESLint (TypeScript/JavaScript), flake8/black (Python)
 - Security: Trivy scan, Sentry, Nightwatch
 
 ---
