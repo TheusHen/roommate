@@ -96,13 +96,13 @@ else
     skip_test "Node.js projects" "node or npm not available"
 fi
 
-# Flutter tests
-if command -v flutter >/dev/null 2>&1; then
-    if [ -f "app/pubspec.yaml" ]; then
-        run_test "Flutter App" "flutter pub get && flutter test" "app"
+# Web Application tests
+if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
+    if [ -f "web/package.json" ]; then
+        run_test "Web Application" "npm install && npm test" "web"
     fi
 else
-    skip_test "Flutter App" "flutter not available"
+    skip_test "Web Application" "node or npm not available"
 fi
 
 # PHP tests

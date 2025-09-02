@@ -12,9 +12,9 @@
 ## 🚀 Key Features
 
 - **🧠 Intelligent Memory System**: Advanced user memory with MongoDB storage and context-aware retrieval
-- **📱 Cross-Platform Mobile App**: Flutter-based application supporting Android, iOS, Web, and Desktop
+- **🌐 Modern Web Application**: Next.js-based responsive web app with TypeScript and Tailwind CSS
 - **🔌 Multi-Language Backend**: TypeScript/Bun server with Python analytics and PHP monitoring
-- **🎤 Voice Interaction**: Real-time voice chat with TTS and speech recognition
+- **🎤 Voice Interaction**: Real-time voice chat with Web Speech API and text-to-speech
 - **🏠 IoT Integration**: ESP32 support for smart home automation
 - **📊 Real-Time Analytics**: Comprehensive monitoring with Sentry error tracking and Nightwatch
 - **⚡ High Performance**: Nginx reverse proxy with Varnish caching for optimal performance
@@ -26,57 +26,53 @@
 graph TB
     subgraph "🖥️ Client Layer"
         A[👤 User Interface]
-        B[📱 Flutter App]
-        C[🌐 Web Interface]
-        D[🏠 ESP32/IoT Devices]
+        B[🌐 Web Application]
+        C[🏠 ESP32/IoT Devices]
     end
     
     subgraph "🔄 Proxy & Caching"
-        E[🚀 Nginx Reverse Proxy]
-        F[⚡ Varnish Cache]
+        D[🚀 Nginx Reverse Proxy]
+        E[⚡ Varnish Cache]
     end
     
     subgraph "🎯 Core Services"
-        G[🖥️ TypeScript/Bun Server]
-        H[🧠 Context Grabber]
-        I[📝 Memory Handler]
-        J[📅 Scheduler]
+        F[🖥️ TypeScript/Bun Server]
+        G[🧠 Context Grabber]
+        H[📝 Memory Handler]
+        I[📅 Scheduler]
     end
     
     subgraph "💾 Data Layer"
-        K[🗄️ MongoDB Database]
-        L[📊 Analytics Data]
+        J[🗄️ MongoDB Database]
+        K[📊 Analytics Data]
     end
     
     subgraph "🔧 Support Services"
-        M[🐍 Python Analytics]
-        N[🔍 PHP Nightwatch]
-        O[🚨 Sentry Monitoring]
-        P[🤖 GPT-OSS Integration]
+        L[🐍 Python Analytics]
+        M[🔍 PHP Nightwatch]
+        N[🚨 Sentry Monitoring]
+        O[🤖 GPT-OSS Integration]
     end
     
     A --> B
-    A --> C
-    A --> D
-    B --> E
-    C --> E
+    B --> D
+    C --> D
     D --> E
     E --> F
     F --> G
-    G --> H
-    G --> I
-    G --> J
-    I --> K
-    G --> M
-    G --> N
-    G --> O
-    G --> P
-    M --> L
+    F --> H
+    F --> I
+    H --> J
+    F --> L
+    F --> M
+    F --> N
+    F --> O
+    L --> K
     
     style A fill:#e1f5fe
-    style G fill:#fff3e0
-    style K fill:#e8f5e8
-    style O fill:#ffebee
+    style F fill:#fff3e0
+    style J fill:#e8f5e8
+    style N fill:#ffebee
 ```
 
 ## 🛠️ Technology Stack
@@ -84,8 +80,8 @@ graph TB
 ```mermaid
 graph LR
     subgraph "Frontend"
-        A[📱 Flutter/Dart]
-        B[🌐 HTML/CSS/JS]
+        A[🌐 Next.js/React/TypeScript]
+        B[🎨 Tailwind CSS]
     end
     
     subgraph "Backend"
@@ -128,16 +124,17 @@ The fastest way to get Roommate running:
 git clone https://github.com/TheusHen/roommate.git
 cd roommate
 
-# Run everything automatically
-./scripts/start/run.sh
+# Navigate to the web application
+cd web
+
+# Install dependencies and start the web app
+npm install
+npm run dev
+
+# Open your browser to http://localhost:3000
 ```
 
-This script will:
-- ✅ Check and install all dependencies
-- ✅ Set up SSL certificates (HTTPS mode)
-- ✅ Configure environment variables
-- ✅ Start all services (MongoDB, Server, Analytics)
-- ✅ Launch the web interface
+This will start the modern web application with all features available.
 
 ### 🐳 Docker Deployment
 
@@ -162,7 +159,7 @@ For advanced users who want full control:
 # Manual setup
 cd server && bun install
 cd ../mongodb && bun install  
-cd ../app && flutter pub get
+cd ../web && npm install
 cd ../nightwatch && composer install
 
 # Start services individually
@@ -173,16 +170,15 @@ For detailed manual setup instructions, see [docs/advanced_installation.md](docs
 
 ## 🎮 Usage Examples
 
-### Basic Chat Interaction
+### Basic Web App Usage
 ```bash
-# Start the system
-./scripts/start/run.sh
+# Start the web application
+cd web/
+npm install
+npm run dev
 
 # Access web interface
-open http://localhost:8080
-
-# Or use the Flutter app
-cd app && flutter run
+open http://localhost:3000
 ```
 
 ### API Usage
@@ -214,7 +210,7 @@ Content-Type: application/json
 # Test specific components
 cd server && bun test
 cd mongodb && bun test
-cd app && flutter test
+cd web && npm test
 ```
 
 ## 📖 Documentation
