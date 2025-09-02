@@ -1,7 +1,9 @@
 # Frequently Asked Questions (FAQ)
 
 ## What platforms are supported?
-- Web, Android, iOS, Linux, macOS, Windows, ESP32/IoT
+- Web browsers (desktop and mobile), Linux, macOS, Windows, ESP32/IoT
+
+> **Note**: The Flutter mobile apps have been discontinued. Please use the web interface which provides responsive design for mobile devices.
 
 ## How do I run all tests?
 - Use `./run-tests.sh` for a comprehensive test run.

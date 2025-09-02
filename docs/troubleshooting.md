@@ -9,7 +9,7 @@ graph TD
     A[🚨 Issue Reported] --> B{What Component?}
     B -->|Server| C[🖥️ Server Diagnostics]
     B -->|Database| D[🗄️ Database Diagnostics]
-    B -->|Client| E[📱 Client Diagnostics]
+    B -->|Client| E[🌐 Web App Diagnostics]
     B -->|IoT| F[🏠 IoT Diagnostics]
     B -->|Network| G[🌐 Network Diagnostics]
     
@@ -27,9 +27,9 @@ graph TD
     D2 --> H
     D3 --> H
     
-    E --> E1[App Installation]
-    E --> E2[Network Connectivity]
-    E --> E3[Authentication]
+    E --> E1[🌐 Web App Access]
+    E --> E2[🔗 Network Connectivity]
+    E --> E3[🔐 Authentication]
     E1 --> H
     E2 --> H
     E3 --> H
@@ -115,7 +115,7 @@ curl -X POST http://localhost:3000/chat/send \
 ```bash
 # Symptoms
 ./scripts/start/run.sh
-# Error: command not found: bun/flutter/php/etc.
+# Error: command not found: bun/php/etc.
 
 # Solution
 ./scripts/check_dependencies.sh
@@ -255,32 +255,33 @@ curl -H "Authorization: Bearer YOUR_API_PASSWORD" http://localhost:3000/health
 grep "API password" server/logs/*.log
 ```
 
-### Flutter App Issues
+### Web App Issues
 
-#### Issue: Flutter Build Failures
+#### Issue: Web App Not Loading
 ```bash
 # Symptoms
-flutter run fails / flutter build fails
+# Browser shows "Cannot connect" or similar error
 
 # Diagnostics
-flutter doctor -v
-flutter clean
-flutter pub get
+# Check if web server is running
+curl http://localhost:3000/health
+
+# Check if Next.js dev server is running
+cd web && npm run dev
 
 # Common solutions
-rm -rf build/
-flutter pub deps
-flutter upgrade
+cd web && npm install
+cd web && npm run build
 ```
 
 #### Issue: Network Connection Errors
 ```mermaid
 flowchart TD
-    A[📱 Flutter Network Error] --> B{Server Running?}
+    A[🌐 Web App Network Error] --> B{Server Running?}
     B -->|No| C[🚀 Start server: bun run index.ts]
     B -->|Yes| D{Correct API URL?}
     
-    D -->|No| E[📝 Update lib/config.dart]
+    D -->|No| E[📝 Update web/config.js]
     D -->|Yes| F{CORS Issues?}
     
     E --> G[✅ Set correct endpoint]
@@ -291,13 +292,13 @@ flowchart TD
     H --> I
 ```
 
-**Flutter Configuration Check:**
-```dart
-// lib/config.dart - Update API endpoint
-class Config {
-  static const String apiUrl = 'http://localhost:3000'; // or your server URL
-  static const String apiPassword = 'your-api-password';
-}
+**Web App Configuration Check:**
+```javascript
+// web/config.js - Update API endpoint
+const config = {
+  apiUrl: 'http://localhost:3000', // or your server URL
+  apiPassword: 'your-api-password'
+};
 ```
 
 ### Memory System Issues
@@ -544,7 +545,6 @@ When reporting issues, include:
 uname -a
 node --version
 bun --version
-flutter --version
 python3 --version
 php --version
 

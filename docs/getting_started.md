@@ -36,7 +36,6 @@ Before starting, ensure your system meets these requirements:
 - **Python 3.11+**
 - **Node.js 20+**
 - **Bun runtime**
-- **Flutter 3.24+**
 - **PHP 8.2+**
 - **MongoDB 6.0+**
 - **Docker** (optional, for containerized deployment)
@@ -68,7 +67,6 @@ graph TD
     Q --> J
     
     J --> R[🌐 Access Web Interface]
-    J --> S[📱 Connect Mobile App]
     J --> T[🏠 Setup IoT Devices]
     
     style A fill:#e1f5fe
@@ -148,10 +146,7 @@ http://localhost:8080
 http://localhost:3000
 ```
 
-#### Flutter Mobile App
-```bash
-cd app && flutter run
-```
+> **⚠️ Note**: The Flutter mobile app has been discontinued. Please use the web interface which provides the same functionality with responsive design for mobile devices.
 
 #### API Endpoints
 ```bash
@@ -250,7 +245,7 @@ Test your installation with these commands:
 # Test specific components
 cd server && bun test
 cd mongodb && bun test
-cd app && flutter test
+cd web && npm test
 
 # Check service health
 curl http://localhost:3000/health
