@@ -21,6 +21,8 @@ cd /tmp/nginx-src
 make
 sudo make install
 
+sudo apt install nginx-full
+
 # Symlink to /usr/sbin/nginx so Varnish can find it
 sudo ln -sf "$INSTALL_DIR/sbin/nginx" /usr/sbin/nginx
 
