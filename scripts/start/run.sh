@@ -22,6 +22,7 @@ clear
 echo -e "\033[1;32m==============================\033[0m"
 echo -e "\033[1;32m   Roommate Startup Script    \033[0m"
 echo -e "\033[1;32m==============================\033[0m"
+echo -e "\033[1;37m Architecture: Browser → Nginx (443/80) → Varnish (6081) → Bun (3000) \033[0m"
 
 # Deployment mode selection
 echo ""
@@ -35,12 +36,12 @@ read -p "Enter your choice (1-3): " DEPLOYMENT_MODE
 case $DEPLOYMENT_MODE in
     1)
         DEPLOYMENT_TYPE="https"
-        VARNISH_PORT="443"
+        VARNISH_PORT="6081"
         echo -e "\033[1;32m[INFO]\033[0m Selected HTTPS mode - will configure SSL certificates"
         ;;
     2)
         DEPLOYMENT_TYPE="http"
-        VARNISH_PORT="80"
+        VARNISH_PORT="6081"
         echo -e "\033[1;33m[INFO]\033[0m Selected HTTP mode - using port 80"
         ;;
     3)
@@ -59,9 +60,9 @@ echo ""
 if [ "$DEPLOYMENT_TYPE" = "local" ]; then
     PORTS_TO_CHECK="3000"
 elif [ "$DEPLOYMENT_TYPE" = "https" ]; then
-    PORTS_TO_CHECK="443 3000 8443"
+    PORTS_TO_CHECK="443 3000 6081"
 else
-    PORTS_TO_CHECK="80 3000 8080"
+    PORTS_TO_CHECK="80 3000 6081"
 fi
 
 for PORT in $PORTS_TO_CHECK; do
@@ -135,6 +136,23 @@ echo -e "\033[1;32m[OK]\033[0m Scheduler started."
 
 # Start nginx and varnish only for HTTP/HTTPS modes
 if [ "$DEPLOYMENT_TYPE" != "local" ]; then
+    # Set up proper permissions for Varnish files and directories
+    loading_bar "[EXTRA] Setting up Varnish permissions..." 3
+    chmod o+x /home/ubuntu /home/ubuntu/roommate /home/ubuntu/roommate/varnish 2>/dev/null || true
+    sudo chown varnish:varnish $(pwd)/varnish/default_https.vcl $(pwd)/varnish/default.vcl 2>/dev/null || true
+    sudo chmod 644 $(pwd)/varnish/default_https.vcl $(pwd)/varnish/default.vcl 2>/dev/null || true
+    echo -e "\033[1;32m[OK]\033[0m Varnish permissions configured."
+    
+    # Start Varnish first (as it's the backend for Nginx)
+    loading_bar "[EXTRA] Starting Varnish cache..." 6
+    echo "Starting Varnish on port $VARNISH_PORT"
+    if [ "$DEPLOYMENT_TYPE" = "https" ]; then
+        sudo -u varnish varnishd -f $(pwd)/varnish/default_https.vcl -a :$VARNISH_PORT -s malloc,256m > ./varnish.log 2>&1 &
+    else
+        sudo -u varnish varnishd -f $(pwd)/varnish/default.vcl -a :$VARNISH_PORT -s malloc,256m > ./varnish.log 2>&1 &
+    fi
+    echo -e "\033[1;32m[OK]\033[0m Varnish started on port $VARNISH_PORT."
+    
     if [ "$DEPLOYMENT_TYPE" = "https" ]; then
         # Configure nginx for HTTPS
         if [ -f "/tmp/ssl_domain.txt" ] && [ -f "/tmp/ssl_cert_path.txt" ] && [ -f "/tmp/ssl_key_path.txt" ]; then
@@ -149,35 +167,21 @@ if [ "$DEPLOYMENT_TYPE" != "local" ]; then
             sed -i "s|SSL_KEY_PLACEHOLDER|$SSL_KEY|g" nginx/nginx_https_configured.conf
             
             # Start nginx with HTTPS config
-            loading_bar "[EXTRA] Starting nginx (HTTPS)..." 6
-            sudo /opt/nginx-1.29.1/sbin/nginx -c $(pwd)/nginx/nginx_https_configured.conf &
-            echo -e "\033[1;32m[OK]\033[0m Nginx started with HTTPS configuration."
-            
-            # Start varnish on port 443
-            loading_bar "[EXTRA] Starting varnish (HTTPS)..." 6
-            echo "Starting Varnish on port $VARNISH_PORT"
-            export VARNISH_PORT
-            sudo chown ubuntu:ubuntu $(pwd)/varnish/default_https.vcl
-            sudo chmod 644 $(pwd)/varnish/default_https.vcl
-            sudo varnishd -f $(pwd)/varnish/default_https.vcl -a :$VARNISH_PORT -s malloc,256m &
-            echo -e "\033[1;32m[OK]\033[0m Varnish started on port $VARNISH_PORT."
+            loading_bar "[EXTRA] Starting Nginx (HTTPS frontend)..." 6
+            sudo /opt/nginx-1.29.1/sbin/nginx -c $(pwd)/nginx/nginx_https_configured.conf > ./nginx.log 2>&1 &
+            echo -e "\033[1;32m[OK]\033[0m Nginx started with HTTPS configuration on port 443."
         else
             echo -e "\033[1;31m[ERROR]\033[0m SSL configuration files not found. Falling back to HTTP mode."
             DEPLOYMENT_TYPE="http"
-            VARNISH_PORT="80"
+            VARNISH_PORT="6081"
         fi
     fi
     
     if [ "$DEPLOYMENT_TYPE" = "http" ]; then
         # Start nginx with HTTP config
-        loading_bar "[EXTRA] Starting nginx (HTTP)..." 6
-        sudo /opt/nginx-1.29.1/sbin/nginx -c $(pwd)/nginx/nginx.conf &
-        echo -e "\033[1;32m[OK]\033[0m Nginx started with HTTP configuration."
-        
-        # Start varnish on port 80
-        loading_bar "[EXTRA] Starting varnish (HTTP)..." 6
-        sudo varnishd -f $(pwd)/varnish/default.vcl -a :$VARNISH_PORT -s malloc,256m &
-        echo -e "\033[1;32m[OK]\033[0m Varnish started on port $VARNISH_PORT."
+        loading_bar "[EXTRA] Starting Nginx (HTTP frontend)..." 6
+        sudo /opt/nginx-1.29.1/sbin/nginx -c $(pwd)/nginx/nginx.conf > ./nginx.log 2>&1 &
+        echo -e "\033[1;32m[OK]\033[0m Nginx started with HTTP configuration on port 80."
     fi
 fi
 
