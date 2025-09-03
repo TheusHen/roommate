@@ -4,3 +4,4 @@
 # Usage: sudo ./scripts/install/php.sh
 
 /bin/bash -c "$(curl -fsSL https://php.new/install/linux/8.4)"
+export PATH="/root/.config/herd-lite/bin:$PATH"
