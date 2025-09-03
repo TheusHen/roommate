@@ -144,8 +144,8 @@ For containerized deployment (Windows, macOS, Linux):
 # Docker Compose (recommended)
 docker-compose up -d
 
-# Or use the Docker script
-./scripts/start/docker_run.sh
+# Or use the Docker script (requires sudo)
+sudo ./scripts/start/docker_run.sh
 ```
 
 ### ⚙️ Manual Installation
@@ -153,8 +153,8 @@ docker-compose up -d
 For advanced users who want full control:
 
 ```bash
-# Install dependencies
-./scripts/check_dependencies.sh
+# Install dependencies (requires sudo)
+sudo ./scripts/check_dependencies.sh
 
 # Manual setup
 cd server && bun install
@@ -162,8 +162,8 @@ cd ../mongodb && bun install
 cd ../web && npm install
 cd ../nightwatch && composer install
 
-# Start services individually
-./scripts/start/run.sh
+# Start services individually (requires sudo)
+sudo ./scripts/start/run.sh
 ```
 
 For detailed manual setup instructions, see [docs/advanced_installation.md](docs/advanced_installation.md).

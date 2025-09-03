@@ -1,4 +1,7 @@
 #!/bin/bash
+# Note: This script should be run with sudo to validate system fixes
+# Usage: sudo ./scripts/validate_fixes.sh
+
 echo "=== Roommate Startup Issues Fix Validation ==="
 echo
 

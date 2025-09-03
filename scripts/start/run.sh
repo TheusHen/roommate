@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Note: This script should be run with sudo for proper system setup
+# Usage: sudo ./scripts/start/run.sh
+
 chmod +x ./* ./scripts/*.sh ./gpt-oss/*.sh
 
 # Helper for loading bar animation
@@ -71,7 +74,7 @@ done
 
 # Check dependencies
 loading_bar "[1/7] Checking dependencies..." 7
-./scripts/check_dependencies.sh
+sudo ./scripts/check_dependencies.sh
 echo -e "\033[1;32m[OK]\033[0m Dependencies are satisfied."
 
 # SSL setup for HTTPS mode
