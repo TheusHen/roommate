@@ -17,7 +17,7 @@ tar -xf /tmp/nginx.tar.gz -C /tmp/nginx-src --strip-components=1
 
 # Build and install
 cd /tmp/nginx-src
-./configure --prefix="$INSTALL_DIR"
+./configure --prefix="$INSTALL_DIR" --with-http_ssl_module
 make
 sudo make install
 
