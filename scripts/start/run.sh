@@ -22,6 +22,7 @@ clear
 echo -e "\033[1;32m==============================\033[0m"
 echo -e "\033[1;32m   Roommate Startup Script    \033[0m"
 echo -e "\033[1;32m==============================\033[0m"
+echo -e "\033[1;37m Architecture: Browser → Nginx (443/80) → Varnish (6081) → Bun (3000) \033[0m"
 
 # Deployment mode selection
 echo ""
