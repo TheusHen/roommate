@@ -152,8 +152,10 @@ if [ "$DEPLOYMENT_TYPE" != "local" ]; then
             
             # Start varnish on port 443
             loading_bar "[EXTRA] Starting varnish (HTTPS)..." 6
-            sudo chown varnish:varnish /varnish/default_https.vcl
-            sudo chmod 644 /varnish/default_https.vcl
+            echo "Starting Varnish on port $VARNISH_PORT"
+            export VARNISH_PORT
+            sudo chown ubuntu:ubuntu $(pwd)/varnish/default_https.vcl
+            sudo chmod 644 $(pwd)/varnish/default_https.vcl
             sudo varnishd -f $(pwd)/varnish/default_https.vcl -a :$VARNISH_PORT -s malloc,256m &
             echo -e "\033[1;32m[OK]\033[0m Varnish started on port $VARNISH_PORT."
         else
