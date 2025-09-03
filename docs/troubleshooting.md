@@ -82,11 +82,11 @@ sequenceDiagram
 
 ### Automated Diagnostics
 ```bash
-# Run the comprehensive diagnostic script
-./scripts/validate_fixes.sh
+# Run the comprehensive diagnostic script (requires sudo)
+sudo ./scripts/validate_fixes.sh
 
-# Check system dependencies
-./scripts/check_dependencies.sh
+# Check system dependencies (requires sudo)
+sudo ./scripts/check_dependencies.sh
 
 # Test all components
 ./run-tests.sh
@@ -114,17 +114,17 @@ curl -X POST http://localhost:3000/chat/send \
 #### Issue: Dependencies Not Found
 ```bash
 # Symptoms
-./scripts/start/run.sh
+sudo ./scripts/start/run.sh
 # Error: command not found: bun/php/etc.
 
 # Solution
-./scripts/check_dependencies.sh
+sudo ./scripts/check_dependencies.sh
 # Install missing dependencies individually:
-./scripts/install/bun.sh
-./scripts/install/python.sh
-./scripts/install/node.sh
-./scripts/install/php.sh
-./scripts/install/nginx.sh
+sudo ./scripts/install/bun.sh
+sudo ./scripts/install/python.sh
+sudo ./scripts/install/node.sh
+sudo ./scripts/install/php.sh
+sudo ./scripts/install/nginx.sh
 ```
 
 #### Issue: Permission Denied
@@ -136,6 +136,8 @@ bash: ./scripts/start/run.sh: Permission denied
 chmod +x ./scripts/start/run.sh
 chmod +x ./scripts/*.sh
 chmod +x ./gpt-oss/*.sh
+# Then run with sudo
+sudo ./scripts/start/run.sh
 ```
 
 #### Issue: Port Already in Use
@@ -498,8 +500,8 @@ tail -f nightwatch/logs/nightwatch.log
 
 ### Service Recovery
 ```bash
-# Quick service restart
-./scripts/emergency-restart.sh
+# Quick service restart (requires sudo)
+sudo ./scripts/emergency-restart.sh
 
 # Or manual restart
 pkill -f "bun run index.ts"
@@ -524,7 +526,7 @@ mongorestore --host localhost:27017 --db roommate backup/roommate/
 ```bash
 # Rollback to previous version
 git checkout HEAD~1
-./scripts/start/run.sh
+sudo ./scripts/start/run.sh
 
 # Or use Docker tags
 docker pull theushen/roommate:previous
@@ -548,8 +550,8 @@ bun --version
 python3 --version
 php --version
 
-# Service status
-./scripts/validate_fixes.sh > debug-info.txt
+# Service status (requires sudo)
+sudo ./scripts/validate_fixes.sh > debug-info.txt
 
 # Logs (last 50 lines)
 tail -50 server/logs/app.log > server-logs.txt
@@ -566,7 +568,7 @@ uname -a >> debug-report.txt
 echo "" >> debug-report.txt
 
 echo "=== Service Status ===" >> debug-report.txt
-./scripts/validate_fixes.sh >> debug-report.txt
+sudo ./scripts/validate_fixes.sh >> debug-report.txt
 echo "" >> debug-report.txt
 
 echo "=== Recent Logs ===" >> debug-report.txt

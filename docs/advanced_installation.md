@@ -16,14 +16,14 @@ This guide covers manual and advanced setup for the Roommate project, including 
 ### 1. Install Dependencies
 Run the dependency checker:
 ```sh
-./scripts/check_dependencies.sh
+sudo ./scripts/check_dependencies.sh
 ```
 Or install manually:
-- Python: `./scripts/install/python.sh`
-- Bun: `./scripts/install/bun.sh`
-- Node.js: `./scripts/install/node.sh`
-- PHP: `./scripts/install/php.sh`
-- Nginx: `./scripts/install/nginx.sh`
+- Python: `sudo ./scripts/install/python.sh`
+- Bun: `sudo ./scripts/install/bun.sh`
+- Node.js: `sudo ./scripts/install/node.sh`
+- PHP: `sudo ./scripts/install/php.sh`
+- Nginx: `sudo ./scripts/install/nginx.sh`
 
 ### 2. Install Project Packages
 ```sh
@@ -41,10 +41,10 @@ cd ../nightwatch && composer install
 
 ### 4. Docker Setup
 ```sh
-./scripts/start/docker_run.sh
+sudo ./scripts/start/docker_run.sh
 ```
 
 ## Troubleshooting
 - See [FAQ](faq.md) for common issues.
-- Validate fixes: `./scripts/validate_fixes.sh`
+- Validate fixes: `sudo ./scripts/validate_fixes.sh`
 - For CI/CD, see `.github/workflows/ci.yml`.

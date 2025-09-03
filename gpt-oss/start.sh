@@ -4,7 +4,7 @@ set -e
 # Check if Ollama is installed
 if ! command -v ollama &> /dev/null; then
   echo "Ollama not found. Installing..."
-  curl -fsSL https://ollama.com/install.sh | sh
+  curl -fsSL https://ollama.com/install.sh | sudo sh
 fi
 
 # Verify Ollama installation

@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Note: This script should be run with sudo for system-wide installation
+# Usage: sudo ./scripts/install/ollama.sh
+
 echo "Installing Ollama..."
 
 # Install Ollama using the official installation script
