@@ -77,9 +77,10 @@ describe('Server Error Handling', () => {
     const headers = corsHeaders();
     
     expect(headers).toEqual({
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': 'https://roommate-delta.vercel.app',
       'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
     });
   });
 
