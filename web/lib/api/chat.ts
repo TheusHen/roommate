@@ -1,7 +1,7 @@
 import { ApiResponse, FeedbackData } from '../types';
 import { ApiPasswordManager } from '../utils/password-manager';
 
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = 'https://roommate.theushen.me';
 const CHAT_URL = `${API_BASE_URL}/chat`;
 const FEEDBACK_URL = `${API_BASE_URL}/feedback`;
 
