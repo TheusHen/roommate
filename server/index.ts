@@ -79,19 +79,23 @@ function checkAuthorization(req: Request) {
   return true;
 }
 
+const FRONTEND_ORIGIN = "https://roommate-delta.vercel.app";
+
 function corsHeaders() {
   return {
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin": FRONTEND_ORIGIN,
     "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Credentials": "true",
   };
 }
 
 function withCorsHeaders(resp: Response) {
   const headers = new Headers(resp.headers);
-  headers.set("Access-Control-Allow-Origin", "*");
+  headers.set("Access-Control-Allow-Origin", FRONTEND_ORIGIN);
   headers.set("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
   headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  headers.set("Access-Control-Allow-Credentials", "true");
   return new Response(resp.body, {
     status: resp.status,
     headers,
