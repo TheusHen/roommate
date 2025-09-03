@@ -139,6 +139,7 @@ function getErrorStack(err: unknown): string {
 
 const server = Bun.serve({
   port: 3000,
+  idleTimeout: 800,
   async fetch(req) {
     const url = new URL(req.url);
     const startTime = Date.now();

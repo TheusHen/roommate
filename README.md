@@ -113,6 +113,25 @@ graph LR
     K --> I
 ```
 
+## 💻 System Requirements
+
+### Recommended Hardware Specifications
+
+For optimal performance, especially when running AI operations with GPT-OSS models:
+
+- **RAM**: 32GB RAM (recommended) - Required for smooth AI model operations
+  - *Note: 16GB RAM can work but may result in slower performance during AI processing*
+- **Storage**: Minimum 50GB free disk space for models and data
+- **CPU**: Multi-core processor (8+ cores recommended)
+- **Network**: Stable internet connection for model downloads and updates
+
+### Minimum Requirements
+
+- **RAM**: 16GB (performance may be limited for AI operations)
+- **Storage**: 20GB free disk space
+- **CPU**: Quad-core processor
+- **OS**: Linux (Ubuntu 20.04+), macOS (10.15+), or Windows 10+
+
 ## 📦 Installation
 
 ### 🎯 Quick Start (Recommended)
