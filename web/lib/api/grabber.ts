@@ -1,7 +1,7 @@
 import { UserMemory } from '../types';
 import { ApiPasswordManager } from '../utils/password-manager';
 
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = 'https://roommate.theushen.me';
 
 export class Grabber {
   /**
