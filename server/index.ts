@@ -307,7 +307,7 @@ const server = Bun.serve({
 
         const ollamaController = new AbortController();
         
-        ollamaTimeout = setTimeout(() => ollamaController.abort(), 30000); // 30 second timeout
+        ollamaTimeout = setTimeout(() => ollamaController.abort(), 24 * 60 * 60 * 1000); // 24 hour timeout (max practical)
         
         const ollamaResponse = await fetch("http://127.0.0.1:11434/api/chat", {
           method: "POST",
@@ -685,13 +685,16 @@ console.log(`Roommate server online!`);
 // Initialize MongoDB Handler
 initMongoDB().catch(console.error);
 
-// Retry MongoDB connection every 60 seconds if not connected
-const mongoRetryInterval = setInterval(async () => {
-  if (!mongoHandlerConnected) {
-    console.log("[INFO] MongoDB not connected, attempting to reconnect...");
-    await initMongoDB();
-  }
-}, 60000); // 60 seconds
+// Retry MongoDB connection every 60 seconds if not connected (except during tests)
+let mongoRetryInterval: any;
+if (process.env.NODE_ENV !== 'test') {
+  mongoRetryInterval = setInterval(async () => {
+    if (!mongoHandlerConnected) {
+      console.log("[INFO] MongoDB not connected, attempting to reconnect...");
+      await initMongoDB();
+    }
+  }, 60000); // 60 seconds
+}
 
 // Export functions for testing
 export { sendNightwatch, initMongoDB, handleError, checkAuthorization, corsHeaders, mongoRetryInterval };
