@@ -36,19 +36,42 @@ const mongoHandler = new MongoDBHandler();
 let mongoHandlerConnected = false;
 
 async function initMongoDB() {
-  try {
-    // Set a timeout for the connection attempt
-    const connectPromise = mongoHandler.connect();
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('MongoDB connection timeout')), 10000);
-    });
-    
-    await Promise.race([connectPromise, timeoutPromise]);
-    mongoHandlerConnected = true;
-    console.log("[INFO] MongoDB Handler initialized successfully");
-  } catch (error) {
-    console.error("[ERROR] Failed to initialize MongoDB Handler:", error);
-    mongoHandlerConnected = false;
+  const maxRetries = 3;
+  let attempt = 0;
+  
+  while (attempt < maxRetries) {
+    attempt++;
+    try {
+      console.log(`[INFO] Attempting to connect to MongoDB (attempt ${attempt}/${maxRetries})...`);
+      const mongoUri = process.env.MONGO_URI || "mongodb://localhost:27017";
+      console.log("[INFO] MongoDB URI:", mongoUri.replace(/\/\/.*@/, "//<credentials>@")); // Hide credentials in logs
+      
+      // Set a timeout for the connection attempt
+      const connectPromise = mongoHandler.connect();
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('MongoDB connection timeout after 10 seconds')), 10000);
+      });
+      
+      await Promise.race([connectPromise, timeoutPromise]);
+      mongoHandlerConnected = true;
+      console.log("[INFO] MongoDB Handler initialized successfully");
+      return; // Success, exit the retry loop
+    } catch (error) {
+      console.error(`[ERROR] MongoDB connection attempt ${attempt} failed:`, error);
+      
+      if (attempt === maxRetries) {
+        console.error("[ERROR] Failed to initialize MongoDB Handler after all retry attempts");
+        console.error("[ERROR] MongoDB URI provided:", (process.env.MONGO_URI ? "Yes (from env)" : "No (using default)"));
+        console.error("[ERROR] Memory endpoints will return 503 until MongoDB is available");
+        mongoHandlerConnected = false;
+        return;
+      }
+      
+      // Wait before retrying (exponential backoff)
+      const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+      console.log(`[INFO] Retrying MongoDB connection in ${delay/1000} seconds...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
   }
 }
 
@@ -185,10 +208,27 @@ const server = Bun.serve({
       return buildResponse({ message: "pong" });
     }
 
+    if (url.pathname === "/health") {
+      console.log("[INFO] /health route called");
+      return buildResponse({ 
+        status: "running",
+        mongodb_connected: mongoHandlerConnected,
+        mongodb_uri_configured: process.env.MONGO_URI ? true : false,
+        services: {
+          server: "running",
+          mongodb: mongoHandlerConnected ? "connected" : "disconnected"
+        }
+      });
+    }
+
     if (url.pathname === "/chat" && req.method === "POST") {
       if (!checkAuthorization(req)) {
         return buildResponse({ error: "Unauthorized" }, 401);
       }
+      
+      // Declare timeout variable at proper scope for the whole endpoint
+      let ollamaTimeout: NodeJS.Timeout | null = null;
+      
       try {
         const bodyStream = await req.text();
         await logRequest(req, bodyStream);
@@ -261,6 +301,10 @@ const server = Bun.serve({
           }
         }
 
+        const ollamaController = new AbortController();
+        
+        ollamaTimeout = setTimeout(() => ollamaController.abort(), 30000); // 30 second timeout
+        
         const ollamaResponse = await fetch("http://127.0.0.1:11434/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -268,7 +312,10 @@ const server = Bun.serve({
             model: "gpt-oss:20b",
             messages: [{ role: "user", content: enrichedPrompt }],
           }),
+          signal: ollamaController.signal,
         });
+        
+        if (ollamaTimeout) clearTimeout(ollamaTimeout);
 
         const ollamaText = await ollamaResponse.text();
         console.log("[DEBUG] Ollama response text:", ollamaText);
@@ -302,9 +349,23 @@ const server = Bun.serve({
         return buildResponse({ result: data });
 
       } catch (err: unknown) {
+        // Clear timeout if still pending
+        if (ollamaTimeout) clearTimeout(ollamaTimeout);
+        
         handleError(err);
         const errMsg = getErrorMessage(err);
         const errStack = getErrorStack(err);
+        
+        // Check if it's a timeout error
+        if (err instanceof Error && err.name === 'AbortError') {
+          console.error("[ERROR] /chat timeout: Ollama request took longer than 30 seconds");
+          return buildResponse({ 
+            error: "Request timeout",
+            details: "The AI model took too long to respond. Please try again with a shorter prompt.",
+            timeout_seconds: 30
+          }, 504);
+        }
+        
         console.error("[ERROR] /chat failed:", errMsg, errStack);
         return buildResponse({ error: errMsg, stack: errStack }, 500);
       }
@@ -468,7 +529,12 @@ const server = Bun.serve({
       }
       
       if (!mongoHandlerConnected) {
-        return buildResponse({ error: "MongoDB Handler not available" }, 503);
+        return buildResponse({ 
+          error: "MongoDB Handler not available", 
+          details: "Memory saving requires MongoDB connection. Please check server logs for connection details.",
+          mongodb_uri_configured: process.env.MONGO_URI ? true : false,
+          fallback: "Server is running in degraded mode without memory functionality"
+        }, 503);
       }
       
       try {
@@ -512,7 +578,12 @@ const server = Bun.serve({
       }
       
       if (!mongoHandlerConnected) {
-        return buildResponse({ error: "MongoDB Handler not available" }, 503);
+        return buildResponse({ 
+          error: "MongoDB Handler not available",
+          details: "Memory retrieval requires MongoDB connection. Please check server logs for connection details.",
+          mongodb_uri_configured: process.env.MONGO_URI ? true : false,
+          fallback: "Server is running in degraded mode without memory functionality"
+        }, 503);
       }
       
       try {
@@ -610,5 +681,13 @@ console.log(`Roommate server online!`);
 // Initialize MongoDB Handler
 initMongoDB().catch(console.error);
 
+// Retry MongoDB connection every 60 seconds if not connected
+const mongoRetryInterval = setInterval(async () => {
+  if (!mongoHandlerConnected) {
+    console.log("[INFO] MongoDB not connected, attempting to reconnect...");
+    await initMongoDB();
+  }
+}, 60000); // 60 seconds
+
 // Export functions for testing
-export { sendNightwatch, initMongoDB, handleError, checkAuthorization, corsHeaders };
+export { sendNightwatch, initMongoDB, handleError, checkAuthorization, corsHeaders, mongoRetryInterval };
