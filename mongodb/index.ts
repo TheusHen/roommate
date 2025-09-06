@@ -1,4 +1,4 @@
-import { MongoClient, Db, Collection } from '../server/node_modules/mongodb';
+import { MongoClient, Db, Collection } from 'mongodb';
 
 /**
  * Interface representing a user memory entry
