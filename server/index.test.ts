@@ -143,8 +143,7 @@ describe('Server MongoDB Integration', () => {
     await initMongoDB();
 
     expect(mockConsoleError).toHaveBeenCalledWith(
-      '[ERROR] Failed to initialize MongoDB Handler:',
-      expect.any(Error)
+      '[ERROR] Failed to initialize MongoDB Handler after all retry attempts'
     );
     
     mockConsoleError.mockRestore();
