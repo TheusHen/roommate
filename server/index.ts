@@ -125,6 +125,9 @@ function withCorsHeaders(resp: Response) {
   headers.set("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
   headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
   headers.set("Access-Control-Allow-Credentials", "true");
+  
+  console.log("[DEBUG] Applied CORS headers for origin:", FRONTEND_ORIGIN);
+  
   return new Response(resp.body, {
     status: resp.status,
     headers,
@@ -192,6 +195,7 @@ const server = Bun.serve({
     }
 
     if (req.method === "OPTIONS") {
+      console.log("[INFO] CORS preflight request received");
       return new Response(null, {
         status: 204,
         headers: corsHeaders(),
