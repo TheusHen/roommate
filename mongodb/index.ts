@@ -20,7 +20,10 @@ export class MongoDBHandler {
   private memoriesCollection: Collection<UserMemory> | null = null;
 
   constructor(mongoUri: string = process.env.MONGO_URI || "mongodb://localhost:27017") {
-    this.client = new MongoClient(mongoUri);
+    this.client = new MongoClient(mongoUri, {
+      serverSelectionTimeoutMS: 5000, // 5 second timeout
+      connectTimeoutMS: 5000, // 5 second timeout
+    });
   }
 
   /**

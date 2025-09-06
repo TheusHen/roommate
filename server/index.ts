@@ -37,7 +37,13 @@ let mongoHandlerConnected = false;
 
 async function initMongoDB() {
   try {
-    await mongoHandler.connect();
+    // Set a timeout for the connection attempt
+    const connectPromise = mongoHandler.connect();
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('MongoDB connection timeout')), 10000);
+    });
+    
+    await Promise.race([connectPromise, timeoutPromise]);
     mongoHandlerConnected = true;
     console.log("[INFO] MongoDB Handler initialized successfully");
   } catch (error) {
