@@ -26,8 +26,7 @@ jobs:
           cache-dependency-path: mongodb/package.json
       
       - name: Install dependencies
-        working-directory: mongodb
-        run: npm install
+        run: cd mongodb && npm install && cd .. && cd server && npm install
       
       - name: Run MongoDB tests
         working-directory: mongodb
