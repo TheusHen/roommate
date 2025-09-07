@@ -6,6 +6,7 @@ import { Send, ThumbsUp, ThumbsDown, Bot, User, Mic, Loader2 } from 'lucide-reac
 import { ChatMessage, FeedbackData } from '@/lib/types';
 import { ChatApi } from '@/lib/api/chat';
 import { cn, formatTimestamp } from '@/lib/utils';
+import { MessageRenderer } from '@/components/message-renderer';
 
 interface ChatPageProps {
   onVoiceChatOpen: () => void;
@@ -114,7 +115,10 @@ export function ChatPage({ onVoiceChatOpen }: ChatPageProps) {
               ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-br-md' 
               : 'bg-white border border-gray-200 text-gray-900 rounded-bl-md'
           )}>
-            <p className="text-sm leading-relaxed">{message.text}</p>
+            <MessageRenderer 
+              content={message.text} 
+              className={message.isUser ? 'text-white prose-invert' : 'text-gray-900'}
+            />
             {message.timestamp && (
               <p className={cn(
                 'text-xs mt-2 opacity-70',

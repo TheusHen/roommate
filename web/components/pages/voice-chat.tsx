@@ -6,6 +6,7 @@ import { Mic, MicOff, Volume2, ThumbsUp, ThumbsDown, User, Languages, ArrowLeft 
 import { VoiceMessage, Locale, LocaleOption, FeedbackData } from '@/lib/types';
 import { ChatApi } from '@/lib/api/chat';
 import { cn, formatTimestamp } from '@/lib/utils';
+import { MessageRenderer } from '@/components/message-renderer';
 
 interface VoiceChatPageProps {
   onBack: () => void;
@@ -193,7 +194,10 @@ export function VoiceChatPage({ onBack }: VoiceChatPageProps) {
         {/* User Message */}
         <div className="flex justify-end gap-3">
           <div className="max-w-sm lg:max-w-md bg-gradient-to-br from-purple-600 to-purple-700 text-white px-4 py-3 rounded-2xl rounded-br-md shadow-sm">
-            <p className="text-sm leading-relaxed">{message.userPrompt}</p>
+            <MessageRenderer 
+              content={message.userPrompt} 
+              className="text-white prose-invert"
+            />
             <p className="text-xs mt-2 text-purple-100 opacity-70">
               {formatTimestamp(message.timestamp)}
             </p>
@@ -210,7 +214,10 @@ export function VoiceChatPage({ onBack }: VoiceChatPageProps) {
           </div>
           <div className="flex-1">
             <div className="max-w-sm lg:max-w-md bg-white border border-purple-200 px-4 py-3 rounded-2xl rounded-bl-md shadow-sm">
-              <p className="text-sm text-gray-900 leading-relaxed">{message.roommateResponse}</p>
+              <MessageRenderer 
+                content={message.roommateResponse} 
+                className="text-gray-900"
+              />
               <div className="flex items-center justify-between mt-2">
                 <p className="text-xs text-gray-500 opacity-70">
                   {formatTimestamp(message.timestamp)}

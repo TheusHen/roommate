@@ -7,6 +7,7 @@ import { ChatMessage, FeedbackData } from '@/lib/types';
 import { ChatApi } from '@/lib/api/chat';
 import { Grabber } from '@/lib/api/grabber';
 import { cn, formatTimestamp } from '@/lib/utils';
+import { MessageRenderer } from '@/components/message-renderer';
 
 interface EnhancedChatPageProps {
   onVoiceChatOpen: () => void;
@@ -124,7 +125,10 @@ export function EnhancedChatPage({ onVoiceChatOpen }: EnhancedChatPageProps) {
               ? 'bg-gradient-to-br from-purple-600 to-purple-700 text-white rounded-br-md' 
               : 'bg-white border border-purple-200 text-gray-900 rounded-bl-md'
           )}>
-            <p className="text-sm leading-relaxed">{message.text}</p>
+            <MessageRenderer 
+              content={message.text} 
+              className={message.isUser ? 'text-white prose-invert' : 'text-gray-900'}
+            />
             {message.timestamp && (
               <p className={cn(
                 'text-xs mt-2 opacity-70',
