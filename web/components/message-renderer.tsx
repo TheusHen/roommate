@@ -45,19 +45,26 @@ export function MessageRenderer({ content, className }: MessageRendererProps) {
         rehypePlugins={[rehypeKatex]}
         components={{
           // Override heading sizes to make them more appropriate for chat
-          h1: ({ node, ...props }) => <h2 className="text-xl font-bold mt-4 mb-2" {...props} />,
-          h2: ({ node, ...props }) => <h3 className="text-lg font-bold mt-3 mb-2" {...props} />,
-          h3: ({ node, ...props }) => <h4 className="text-base font-bold mt-2 mb-1" {...props} />,
+          h1: ({ ...props }) => <h2 className="text-xl font-bold mt-4 mb-2" {...props} />,
+          h2: ({ ...props }) => <h3 className="text-lg font-bold mt-3 mb-2" {...props} />,
+          h3: ({ ...props }) => <h4 className="text-base font-bold mt-2 mb-1" {...props} />,
           // Make lists more compact
-          ul: ({ node, ...props }) => <ul className="pl-6 my-2" {...props} />,
-          ol: ({ node, ...props }) => <ol className="pl-6 my-2" {...props} />,
+          ul: ({ ...props }) => <ul className="pl-6 my-2" {...props} />,
+          ol: ({ ...props }) => <ol className="pl-6 my-2" {...props} />,
           // Make code blocks stand out
-          code: ({ node, inline, ...props }) => 
-            inline ? (
-              <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-sm" {...props} />
+          code: ({ children, className, ...props }) => {
+            // Check if this is a code block (has className with language) or inline code
+            const isCodeBlock = className && className.startsWith('language-');
+            return isCodeBlock ? (
+              <code className="block p-2 bg-gray-100 dark:bg-gray-800 rounded-md text-sm overflow-x-auto" {...props}>
+                {children}
+              </code>
             ) : (
-              <code className="block p-2 bg-gray-100 dark:bg-gray-800 rounded-md text-sm overflow-x-auto" {...props} />
-            ),
+              <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-sm" {...props}>
+                {children}
+              </code>
+            );
+          },
         }}
       >
         {processedContent}
