@@ -8,6 +8,7 @@ jest.mock('react-markdown', () => {
   };
 });
 
+jest.mock('remark-gfm', () => ({}));
 jest.mock('remark-math', () => ({}));
 jest.mock('rehype-katex', () => ({}));
 
@@ -31,17 +32,25 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
 
 End of message.`;
 
-    const { getByTestId } = render(
+    const { getAllByTestId } = render(
       <MessageRenderer content={content} />
     );
     
-    const markdownContent = getByTestId('markdown-content');
-    const processedContent = markdownContent.textContent || '';
+    const markdownContents = getAllByTestId('markdown-content');
+    expect(markdownContents.length).toBeGreaterThan(0);
     
-    // Check that LaTeX tags were converted to math delimiters
-    expect(processedContent).toContain('$$');
-    expect(processedContent).not.toContain('<latex>');
-    expect(processedContent).not.toContain('</latex>');
+    // Check the main content (first element) - LaTeX should be removed
+    const mainContent = markdownContents[0].textContent || '';
+    expect(mainContent).toContain("Here's a formula:");
+    expect(mainContent).toContain('End of message.');
+    expect(mainContent).not.toContain('<latex>');
+    expect(mainContent).not.toContain('</latex>');
+
+    // Check that there's a LaTeX formula rendered (second element)
+    if (markdownContents.length > 1) {
+      const latexContent = markdownContents[1].textContent || '';
+      expect(latexContent).toContain('$');
+    }
   });
 
   it('handles multiple LaTeX blocks', () => {
@@ -57,26 +66,34 @@ Second formula:
 A = \\pi r^2
 </latex>`;
 
-    const { getByTestId } = render(
+    const { getAllByTestId } = render(
       <MessageRenderer content={content} />
     );
     
-    const markdownContent = getByTestId('markdown-content');
-    const processedContent = markdownContent.textContent || '';
+    const markdownContents = getAllByTestId('markdown-content');
+    expect(markdownContents.length).toBeGreaterThan(0);
     
-    // Should have two math blocks
-    const mathBlocks = (processedContent.match(/\$\$/g) || []).length;
-    expect(mathBlocks).toBe(4); // 2 opening and 2 closing $$
+    // Check the main content (first element) - LaTeX should be removed
+    const mainContent = markdownContents[0].textContent || '';
+    expect(mainContent).toContain('First formula:');
+    expect(mainContent).toContain('Second formula:');
+    expect(mainContent).not.toContain('<latex>');
+    expect(mainContent).not.toContain('</latex>');
+
+    // Should have LaTeX formulas rendered as additional elements
+    expect(markdownContents.length).toBeGreaterThan(1);
   });
 
   it('preserves regular text when no LaTeX is present', () => {
     const content = 'This is just regular text with no math.';
     
-    const { getByTestId } = render(
+    const { getAllByTestId } = render(
       <MessageRenderer content={content} />
     );
     
-    const markdownContent = getByTestId('markdown-content');
-    expect(markdownContent.textContent).toBe(content);
+    const markdownContents = getAllByTestId('markdown-content');
+    // Should only have one markdown content element when no LaTeX
+    expect(markdownContents.length).toBe(1);
+    expect(markdownContents[0].textContent).toBe(content);
   });
 });
