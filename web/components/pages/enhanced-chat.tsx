@@ -53,7 +53,9 @@ export function EnhancedChatPage({ onVoiceChatOpen }: EnhancedChatPageProps) {
       
       setIsProcessingContext(false);
       
-      const response = await ChatApi.sendMessage(enrichedPrompt);
+      // Format input for the Roommate assistant
+      const formattedPrompt = `Said: ${enrichedPrompt}`;
+      const response = await ChatApi.sendMessage(formattedPrompt);
       const roommateMessage: ChatMessage = {
         text: response,
         isUser: false,
@@ -191,8 +193,8 @@ export function EnhancedChatPage({ onVoiceChatOpen }: EnhancedChatPageProps) {
               <Brain className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-gray-900">Enhanced Chat</h1>
-              <p className="text-sm text-purple-600">with memory & context</p>
+              <h1 className="text-lg font-semibold text-gray-900">Roommate Memory</h1>
+              <p className="text-sm text-purple-600">with context awareness</p>
             </div>
           </div>
           <button
@@ -244,7 +246,7 @@ export function EnhancedChatPage({ onVoiceChatOpen }: EnhancedChatPageProps) {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Type your message... (I'll remember our conversation)"
+                placeholder="Ask me anything (I'll remember our conversation)"
                 disabled={isLoading}
                 className="w-full px-4 py-3 pr-12 border border-purple-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:opacity-50"
               />

@@ -36,7 +36,10 @@ export function VoiceChatPage({ onBack }: VoiceChatPageProps) {
     // Cancel any ongoing speech
     synthRef.current.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
+    // Remove LaTeX blocks for speech
+    const textWithoutLatex = text.replace(/<latex>[\s\S]*?<\/latex>/g, '');
+
+    const utterance = new SpeechSynthesisUtterance(textWithoutLatex);
     utterance.lang = selectedLocale;
     utterance.rate = 0.9;
     utterance.pitch = 1;
@@ -52,7 +55,9 @@ export function VoiceChatPage({ onBack }: VoiceChatPageProps) {
     setCurrentText('');
 
     try {
-      const response = await ChatApi.sendMessage(transcript);
+      // Format input for the Roommate assistant
+      const formattedPrompt = `Said: ${transcript}`;
+      const response = await ChatApi.sendMessage(formattedPrompt);
       const voiceMessage: VoiceMessage = {
         userPrompt: transcript,
         roommateResponse: response,
@@ -136,6 +141,9 @@ export function VoiceChatPage({ onBack }: VoiceChatPageProps) {
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
+      }
+      if (synthRef.current) {
+        synthRef.current.cancel();
       }
     };
   }, [selectedLocale, handleVoiceInput]);
@@ -304,8 +312,8 @@ export function VoiceChatPage({ onBack }: VoiceChatPageProps) {
               <Mic className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-gray-900">Voice Chat</h1>
-              <p className="text-sm text-purple-600">Speak naturally</p>
+              <h1 className="text-lg font-semibold text-gray-900">Roommate Voice</h1>
+              <p className="text-sm text-purple-600">Just speak naturally</p>
             </div>
           </div>
           
@@ -346,7 +354,7 @@ export function VoiceChatPage({ onBack }: VoiceChatPageProps) {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-purple-50 border border-purple-200 rounded-lg px-4 py-2 min-h-[3rem] flex items-center justify-center"
+                className="bg-purple-50 border border-purple-200 rounded-lg px-4 py-2 min-h-[3rem] flex items-center justify-center w-full"
               >
                 <p className="text-purple-700 text-center">
                   {currentText || (isListening ? 'Listening...' : '')}

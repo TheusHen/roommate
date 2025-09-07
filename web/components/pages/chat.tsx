@@ -44,7 +44,9 @@ export function ChatPage({ onVoiceChatOpen }: ChatPageProps) {
     setIsLoading(true);
 
     try {
-      const response = await ChatApi.sendMessage(trimmedInput);
+      // Format input for the Roommate assistant
+      const formattedInput = `Said: ${trimmedInput}`;
+      const response = await ChatApi.sendMessage(formattedInput);
       const roommateMessage: ChatMessage = {
         text: response,
         isUser: false,
@@ -182,7 +184,7 @@ export function ChatPage({ onVoiceChatOpen }: ChatPageProps) {
             </div>
             <div>
               <h1 className="text-lg font-semibold text-gray-900">Roommate Chat</h1>
-              <p className="text-sm text-gray-500">Your AI companion</p>
+              <p className="text-sm text-gray-500">Your AI study companion</p>
             </div>
           </div>
           <button
@@ -232,7 +234,7 @@ export function ChatPage({ onVoiceChatOpen }: ChatPageProps) {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Type your message..."
+                placeholder="Ask me anything (math, science, study tips...)"
                 disabled={isLoading}
                 className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
               />

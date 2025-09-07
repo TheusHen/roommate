@@ -1,69 +1,83 @@
 'use client';
 
-import React from 'react';
+import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import { cn } from '@/lib/utils';
+import 'katex/dist/katex.min.css';
 
 interface MessageRendererProps {
   content: string;
   className?: string;
 }
 
-export function MessageRenderer({ content, className = '' }: MessageRendererProps) {
-  // Process the content to handle <latex> tags
-  const processedContent = React.useMemo(() => {
-    // Replace <latex>...</latex> with proper math delimiters
-    return content.replace(/<latex>([\s\S]*?)<\/latex>/g, (match, mathContent) => {
-      // Clean up the LaTeX content - remove extra whitespace and newlines
-      const cleanMath = mathContent.trim();
-      // Use block math delimiters for LaTeX content
-      return `$$${cleanMath}$$`;
-    });
+export function MessageRenderer({ content, className }: MessageRendererProps) {
+  const [processedContent, setProcessedContent] = useState<string>(content);
+  const [latexFormulas, setLatexFormulas] = useState<string[]>([]);
+
+  useEffect(() => {
+    // Extract LaTeX sections and prepare content for rendering
+    const regex = /<latex>([\s\S]*?)<\/latex>/g;
+    const formulas: string[] = [];
+    let match;
+    let tempContent = content;
+
+    // Extract all LaTeX formulas
+    while ((match = regex.exec(content)) !== null) {
+      formulas.push(match[1].trim());
+    }
+
+    // Remove LaTeX sections from the main content
+    if (formulas.length > 0) {
+      tempContent = content.replace(regex, '');
+    }
+
+    setProcessedContent(tempContent);
+    setLatexFormulas(formulas);
   }, [content]);
 
   return (
-    <div className={`prose prose-sm max-w-none ${className}`}>
+    <div className={cn('prose max-w-none', className)}>
       <ReactMarkdown
-        remarkPlugins={[remarkMath]}
+        remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeKatex]}
         components={{
-          // Customize paragraph rendering to handle line breaks properly
-          p: ({ children }) => <p className="text-sm leading-relaxed mb-2 last:mb-0">{children}</p>,
-          // Customize code rendering
-          code: ({ className, children, ...props }) => {
-            const match = /language-(\w+)/.exec(className || '');
-            return match ? (
-              <code className="bg-gray-100 dark:bg-gray-800 rounded px-1 py-0.5 text-xs font-mono" {...props}>
-                {children}
-              </code>
+          // Override heading sizes to make them more appropriate for chat
+          h1: ({ node, ...props }) => <h2 className="text-xl font-bold mt-4 mb-2" {...props} />,
+          h2: ({ node, ...props }) => <h3 className="text-lg font-bold mt-3 mb-2" {...props} />,
+          h3: ({ node, ...props }) => <h4 className="text-base font-bold mt-2 mb-1" {...props} />,
+          // Make lists more compact
+          ul: ({ node, ...props }) => <ul className="pl-6 my-2" {...props} />,
+          ol: ({ node, ...props }) => <ol className="pl-6 my-2" {...props} />,
+          // Make code blocks stand out
+          code: ({ node, inline, ...props }) => 
+            inline ? (
+              <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-sm" {...props} />
             ) : (
-              <code className="bg-gray-100 dark:bg-gray-800 rounded px-1 py-0.5 text-xs font-mono" {...props}>
-                {children}
-              </code>
-            );
-          },
-          // Customize blockquote
-          blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-gray-300 pl-4 italic text-gray-600 my-2">
-              {children}
-            </blockquote>
-          ),
-          // Customize lists
-          ul: ({ children }) => <ul className="list-disc list-inside my-2 space-y-1">{children}</ul>,
-          ol: ({ children }) => <ol className="list-decimal list-inside my-2 space-y-1">{children}</ol>,
-          li: ({ children }) => <li className="text-sm">{children}</li>,
-          // Customize headers
-          h1: ({ children }) => <h1 className="text-lg font-bold mb-2">{children}</h1>,
-          h2: ({ children }) => <h2 className="text-base font-bold mb-2">{children}</h2>,
-          h3: ({ children }) => <h3 className="text-sm font-bold mb-1">{children}</h3>,
-          // Customize emphasis
-          strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-          em: ({ children }) => <em className="italic">{children}</em>,
+              <code className="block p-2 bg-gray-100 dark:bg-gray-800 rounded-md text-sm overflow-x-auto" {...props} />
+            ),
         }}
       >
         {processedContent}
       </ReactMarkdown>
+
+      {/* Render LaTeX formulas if present */}
+      {latexFormulas.length > 0 && (
+        <div className="mt-4 pt-2 border-t border-gray-200 dark:border-gray-700">
+          {latexFormulas.map((formula, index) => (
+            <div key={index} className="my-2 py-1 overflow-x-auto">
+              <ReactMarkdown
+                remarkPlugins={[remarkMath]}
+                rehypePlugins={[rehypeKatex]}
+              >
+                {`$${formula}$`}
+              </ReactMarkdown>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
