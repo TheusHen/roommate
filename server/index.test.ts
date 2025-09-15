@@ -117,8 +117,8 @@ describe('Server Error Handling', () => {
       }
     } as unknown as Request;
     
-    expect(checkAuthorization(validReq)).toBe(true);
-    expect(checkAuthorization(invalidReq)).toBe(false);
+    expect(checkAuthorization(validReq)).toEqual({ authorized: true, isTestMode: false });
+    expect(checkAuthorization(invalidReq)).toEqual({ authorized: false, isTestMode: false });
     
     // Clean up
     if (fs.existsSync(passwordFile)) {
