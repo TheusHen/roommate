@@ -36,6 +36,12 @@ export class Grabber {
       const apiPassword = ApiPasswordManager.getPassword();
       if (!apiPassword) return;
 
+      // Skip saving memory in test mode for privacy
+      if (apiPassword === 'TEST_MODE') {
+        console.log('[INFO] Test mode: Skipping memory save for privacy');
+        return;
+      }
+
       const response = await fetch(`${API_BASE_URL}/memory/save`, {
         method: 'POST',
         headers: {
@@ -61,6 +67,12 @@ export class Grabber {
     try {
       const apiPassword = ApiPasswordManager.getPassword();
       if (!apiPassword) return [];
+
+      // Skip getting memories in test mode for privacy
+      if (apiPassword === 'TEST_MODE') {
+        console.log('[INFO] Test mode: Skipping memory retrieval for privacy');
+        return [];
+      }
 
       const response = await fetch(`${API_BASE_URL}/memory/get`, {
         method: 'POST',

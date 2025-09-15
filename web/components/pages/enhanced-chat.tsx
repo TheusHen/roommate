@@ -58,14 +58,24 @@ export function EnhancedChatPage({ onVoiceChatOpen }: EnhancedChatPageProps) {
     setIsProcessingContext(true);
 
     try {
-      // Use Grabber to enrich the prompt with user context
-      const defaultUserId = 'default-user'; // In a real app, this would come from authentication
-      const enrichedPrompt = await Grabber.enrichPrompt(defaultUserId, trimmedInput);
+      // Check if user is in test mode
+      const password = ApiPasswordManager.getPassword();
+      const isTestMode = password === 'TEST_MODE';
+      
+      let finalPrompt = trimmedInput;
+      
+      // Only use Grabber to enrich the prompt if NOT in test mode
+      if (!isTestMode) {
+        // Use Grabber to enrich the prompt with user context
+        const defaultUserId = 'default-user'; // In a real app, this would come from authentication
+        const enrichedPrompt = await Grabber.enrichPrompt(defaultUserId, trimmedInput);
+        finalPrompt = enrichedPrompt;
+      }
       
       setIsProcessingContext(false);
       
       // Format input for the Roommate assistant
-      const formattedPrompt = `Said: ${enrichedPrompt}`;
+      const formattedPrompt = `Said: ${finalPrompt}`;
       const apiResponse = await ChatApi.sendMessage(formattedPrompt);
       
       // Update test mode status if present
@@ -307,7 +317,7 @@ export function EnhancedChatPage({ onVoiceChatOpen }: EnhancedChatPageProps) {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask me anything (I'll remember our conversation)"
                 disabled={isLoading}
-                className="w-full px-4 py-3 pr-12 border border-purple-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:opacity-50"
+                className="w-full px-4 py-3 pr-12 border border-purple-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:opacity-50 text-gray-900 placeholder:text-gray-500 bg-white"
               />
             </div>
             <button
