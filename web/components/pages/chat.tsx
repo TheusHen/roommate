@@ -46,9 +46,9 @@ export function ChatPage({ onVoiceChatOpen }: ChatPageProps) {
     try {
       // Format input for the Roommate assistant
       const formattedInput = `Said: ${trimmedInput}`;
-      const response = await ChatApi.sendMessage(formattedInput);
+      const apiResponse = await ChatApi.sendMessage(formattedInput);
       const roommateMessage: ChatMessage = {
-        text: response,
+        text: apiResponse.response,
         isUser: false,
         timestamp: new Date(),
       };
