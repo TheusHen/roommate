@@ -26,6 +26,11 @@ export interface ApiResponse {
     response?: string;
   };
   error?: string;
+  test_mode?: {
+    active: boolean;
+    remaining_requests: number;
+    message: string;
+  };
 }
 
 export interface FeedbackData {

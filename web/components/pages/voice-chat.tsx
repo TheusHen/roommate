@@ -57,16 +57,16 @@ export function VoiceChatPage({ onBack }: VoiceChatPageProps) {
     try {
       // Format input for the Roommate assistant
       const formattedPrompt = `Said: ${transcript}`;
-      const response = await ChatApi.sendMessage(formattedPrompt);
+      const apiResponse = await ChatApi.sendMessage(formattedPrompt);
       const voiceMessage: VoiceMessage = {
         userPrompt: transcript,
-        roommateResponse: response,
+        roommateResponse: apiResponse.response,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, voiceMessage]);
       
       // Speak the response
-      speak(response);
+      speak(apiResponse.response);
     } catch (error) {
       console.error('Error processing voice input:', error);
       const errorMessage: VoiceMessage = {
