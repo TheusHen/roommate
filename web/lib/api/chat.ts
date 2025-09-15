@@ -6,7 +6,14 @@ const CHAT_URL = `${API_BASE_URL}/chat`;
 const FEEDBACK_URL = `${API_BASE_URL}/feedback`;
 
 export class ChatApi {
-  static async sendMessage(prompt: string): Promise<string> {
+  static async sendMessage(prompt: string): Promise<{ 
+    response: string; 
+    testMode?: { 
+      active: boolean; 
+      remaining_requests: number; 
+      message: string 
+    } 
+  }> {
     const apiPassword = ApiPasswordManager.getPassword();
     
     if (!apiPassword) {
@@ -38,6 +45,11 @@ Main behavior rules:
     });
 
     if (!response.ok) {
+      if (response.status === 429) {
+        // Test mode limit reached
+        const errorData = await response.json();
+        throw new Error(JSON.stringify(errorData));
+      }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
@@ -55,7 +67,10 @@ Main behavior rules:
       roommateResponse = 'Sorry, I couldn\'t process your request.';
     }
 
-    return roommateResponse;
+    return {
+      response: roommateResponse,
+      testMode: data.test_mode
+    };
   }
 
   static async sendFeedback(feedbackData: FeedbackData): Promise<void> {

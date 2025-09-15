@@ -2,12 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, ThumbsUp, ThumbsDown, User, Mic, Loader2, Brain } from 'lucide-react';
+import { Send, ThumbsUp, ThumbsDown, User, Mic, Loader2, Brain, TestTube, ExternalLink } from 'lucide-react';
 import { ChatMessage, FeedbackData } from '@/lib/types';
 import { ChatApi } from '@/lib/api/chat';
 import { Grabber } from '@/lib/api/grabber';
 import { cn, formatTimestamp } from '@/lib/utils';
 import { MessageRenderer } from '@/components/message-renderer';
+import { ApiPasswordManager } from '@/lib/utils/password-manager';
 
 interface EnhancedChatPageProps {
   onVoiceChatOpen: () => void;
@@ -19,7 +20,17 @@ export function EnhancedChatPage({ onVoiceChatOpen }: EnhancedChatPageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [feedbacks, setFeedbacks] = useState<Record<number, 'positive' | 'negative'>>({});
   const [isProcessingContext, setIsProcessingContext] = useState(false);
+  const [testMode, setTestMode] = useState<{ active: boolean; remaining_requests: number; message: string } | null>(null);
+  const [showTestLimitModal, setShowTestLimitModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Check if user is in test mode
+  useEffect(() => {
+    const password = ApiPasswordManager.getPassword();
+    if (password === 'TEST_MODE') {
+      setTestMode({ active: true, remaining_requests: 3, message: 'You have 3 test messages remaining.' });
+    }
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -55,9 +66,15 @@ export function EnhancedChatPage({ onVoiceChatOpen }: EnhancedChatPageProps) {
       
       // Format input for the Roommate assistant
       const formattedPrompt = `Said: ${enrichedPrompt}`;
-      const response = await ChatApi.sendMessage(formattedPrompt);
+      const apiResponse = await ChatApi.sendMessage(formattedPrompt);
+      
+      // Update test mode status if present
+      if (apiResponse.testMode) {
+        setTestMode(apiResponse.testMode);
+      }
+      
       const roommateMessage: ChatMessage = {
-        text: response,
+        text: apiResponse.response,
         isUser: false,
         timestamp: new Date(),
       };
@@ -65,12 +82,35 @@ export function EnhancedChatPage({ onVoiceChatOpen }: EnhancedChatPageProps) {
     } catch (error) {
       console.error('Error sending message:', error);
       setIsProcessingContext(false);
-      const errorMessage: ChatMessage = {
-        text: 'Sorry, something went wrong. Please try again.',
-        isUser: false,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      
+      // Check if it's a test mode limit error
+      if (error instanceof Error && error.message.includes('Test mode limit reached')) {
+        try {
+          const errorData = JSON.parse(error.message);
+          setShowTestLimitModal(true);
+          const errorMessage: ChatMessage = {
+            text: errorData.message + '\n\n' + errorData.setup_instructions,
+            isUser: false,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, errorMessage]);
+        } catch {
+          // Fallback error handling
+          const errorMessage: ChatMessage = {
+            text: 'Test mode limit reached. Please set up your own server to continue.',
+            isUser: false,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, errorMessage]);
+        }
+      } else {
+        const errorMessage: ChatMessage = {
+          text: 'Sorry, something went wrong. Please try again.',
+          isUser: false,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -239,6 +279,25 @@ export function EnhancedChatPage({ onVoiceChatOpen }: EnhancedChatPageProps) {
 
       {/* Input */}
       <div className="bg-white border-t border-purple-200 p-4">
+        {/* Test Mode Status */}
+        {testMode?.active && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-4xl mx-auto mb-4"
+          >
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+              <div className="flex items-center gap-2">
+                <TestTube className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium text-green-800">Test Mode Active</span>
+                <span className="text-sm text-green-600">
+                  {testMode.remaining_requests} {testMode.remaining_requests === 1 ? 'message' : 'messages'} remaining
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+        
         <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto">
           <div className="flex gap-3">
             <div className="flex-1 relative">
@@ -261,6 +320,54 @@ export function EnhancedChatPage({ onVoiceChatOpen }: EnhancedChatPageProps) {
           </div>
         </form>
       </div>
+
+      {/* Test Limit Modal */}
+      <AnimatePresence>
+        {showTestLimitModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            onClick={() => setShowTestLimitModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl p-6 max-w-md mx-auto shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <TestTube className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Test Limit Reached</h3>
+                <p className="text-gray-600 mb-6">
+                  You've used all 3 free test messages. To continue using Roommate, set up your own server.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowTestLimitModal(false)}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Close
+                  </button>
+                  <a
+                    href="https://github.com/TheusHen/roommate"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Setup Guide
+                  </a>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

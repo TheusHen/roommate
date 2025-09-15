@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Lock, ArrowRight, Info, Shield } from 'lucide-react';
+import { Lock, ArrowRight, Info, Shield, TestTube } from 'lucide-react';
 import { ApiPasswordManager } from '@/lib/utils/password-manager';
 import { cn } from '@/lib/utils';
 
@@ -34,6 +34,22 @@ export function PasswordPromptPage({ onSuccess }: PasswordPromptPageProps) {
     } catch (error) {
       setError('Failed to save password. Please try again.');
       console.error('Password save error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTestMode = () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Set a special test token
+      ApiPasswordManager.setPassword('TEST_MODE');
+      onSuccess();
+    } catch (error) {
+      setError('Failed to enter test mode. Please try again.');
+      console.error('Test mode error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -143,6 +159,40 @@ export function PasswordPromptPage({ onSuccess }: PasswordPromptPageProps) {
               </>
             )}
           </motion.button>
+
+          {/* OR divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-white px-2 text-gray-500">OR</span>
+            </div>
+          </div>
+
+          {/* Test Mode Button */}
+          <motion.button
+            type="button"
+            onClick={handleTestMode}
+            disabled={isLoading}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className={cn(
+              'w-full py-4 px-6 rounded-xl font-semibold transition-all duration-200',
+              'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800',
+              'text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed',
+              'flex items-center justify-center gap-3'
+            )}
+          >
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <>
+                <TestTube className="w-5 h-5" />
+                <span>Try Test Mode (3 free messages)</span>
+              </>
+            )}
+          </motion.button>
         </motion.form>
 
         {/* Security Note */}
@@ -150,13 +200,27 @@ export function PasswordPromptPage({ onSuccess }: PasswordPromptPageProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.6 }}
-          className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200"
+          className="mt-6 space-y-4"
         >
-          <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-gray-500 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-gray-600">
-              Your password is stored securely in your browser&apos;s local storage and never transmitted to external servers.
-            </p>
+          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-start gap-3">
+              <Info className="w-5 h-5 text-gray-500 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-gray-600">
+                Your password is stored securely in your browser&apos;s local storage and never transmitted to external servers.
+              </p>
+            </div>
+          </div>
+          
+          <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+            <div className="flex items-start gap-3">
+              <TestTube className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm text-green-700 font-medium mb-1">Test Mode</p>
+                <p className="text-sm text-green-600">
+                  Try Roommate with up to 3 free messages. After the limit, you&apos;ll receive information on how to set up your own server.
+                </p>
+              </div>
+            </div>
           </div>
         </motion.div>
       </div>

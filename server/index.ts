@@ -100,12 +100,72 @@ function handleError(error: any) {
   }
 }
 
+// IP tracking for test mode
+const testModeUsage = new Map<string, { count: number; firstRequest: number }>();
+const TEST_MODE_LIMIT = 3;
+const TEST_MODE_TOKEN = 'TEST_MODE';
+
+function getClientIP(req: Request): string {
+  // Try to get IP from various headers (considering proxies)
+  const xForwardedFor = req.headers.get('x-forwarded-for');
+  const xRealIP = req.headers.get('x-real-ip');
+  const cfConnectingIP = req.headers.get('cf-connecting-ip');
+  
+  if (xForwardedFor) {
+    // x-forwarded-for can contain multiple IPs, take the first one
+    return xForwardedFor.split(',')[0].trim();
+  }
+  
+  if (xRealIP) {
+    return xRealIP;
+  }
+  
+  if (cfConnectingIP) {
+    return cfConnectingIP;
+  }
+  
+  // Fallback - this might not work correctly behind proxies
+  return 'unknown';
+}
+
+function checkTestModeLimit(ip: string): { allowed: boolean; remaining: number } {
+  const now = Date.now();
+  const usage = testModeUsage.get(ip);
+  
+  if (!usage) {
+    // First request from this IP
+    testModeUsage.set(ip, { count: 1, firstRequest: now });
+    return { allowed: true, remaining: TEST_MODE_LIMIT - 1 };
+  }
+  
+  if (usage.count >= TEST_MODE_LIMIT) {
+    return { allowed: false, remaining: 0 };
+  }
+  
+  // Increment counter
+  usage.count++;
+  testModeUsage.set(ip, usage);
+  
+  return { allowed: true, remaining: TEST_MODE_LIMIT - usage.count };
+}
+
 function checkAuthorization(req: Request) {
   const authHeader = req.headers.get("Authorization");
-  if (!authHeader || authHeader !== `Bearer ${apiPassword}`) {
-    return false;
+  if (!authHeader) {
+    return { authorized: false, isTestMode: false };
   }
-  return true;
+  
+  const token = authHeader.replace('Bearer ', '');
+  
+  if (token === TEST_MODE_TOKEN) {
+    return { authorized: true, isTestMode: true };
+  }
+  
+  if (token === apiPassword) {
+    return { authorized: true, isTestMode: false };
+  }
+  
+  return { authorized: false, isTestMode: false };
 }
 
 const FRONTEND_ORIGIN = "https://roommate-delta.vercel.app";
@@ -226,8 +286,30 @@ const server = Bun.serve({
     }
 
     if (url.pathname === "/chat" && req.method === "POST") {
-      if (!checkAuthorization(req)) {
+      const authResult = checkAuthorization(req);
+      
+      if (!authResult.authorized) {
         return buildResponse({ error: "Unauthorized" }, 401);
+      }
+      
+      // Check test mode limits if using test token
+      let remainingRequests: number | undefined;
+      if (authResult.isTestMode) {
+        const clientIP = getClientIP(req);
+        const limitCheck = checkTestModeLimit(clientIP);
+        
+        if (!limitCheck.allowed) {
+          return buildResponse({ 
+            error: "Test mode limit reached",
+            message: "You've used all 3 free test messages. To continue using Roommate, please set up your own server.",
+            repository_url: "https://github.com/TheusHen/roommate",
+            setup_instructions: "Clone the repository and follow the setup instructions in the README to run your own Roommate server.",
+            ip: clientIP
+          }, 429);
+        }
+        
+        remainingRequests = limitCheck.remaining;
+        console.log(`[INFO] Test mode request from IP ${clientIP}, ${remainingRequests} requests remaining`);
       }
       
       // Declare timeout variable at proper scope for the whole endpoint
@@ -368,7 +450,20 @@ Main behavior rules:
         }
 
         console.log("[SUCCESS] /chat response received");
-        return buildResponse({ result: data });
+        const responseData: any = { result: data };
+        
+        // Add test mode information if applicable
+        if (authResult.isTestMode && remainingRequests !== undefined) {
+          responseData.test_mode = {
+            active: true,
+            remaining_requests: remainingRequests,
+            message: remainingRequests > 0 
+              ? `You have ${remainingRequests} test messages remaining.`
+              : "This was your last test message. Set up your own server to continue!"
+          };
+        }
+        
+        return buildResponse(responseData);
 
       } catch (err: unknown) {
         // Clear timeout if still pending
@@ -394,7 +489,8 @@ Main behavior rules:
     }
 
     if (url.pathname === "/generate" && req.method === "POST") {
-      if (!checkAuthorization(req)) {
+      const authResult = checkAuthorization(req);
+      if (!authResult.authorized) {
         return buildResponse({ error: "Unauthorized" }, 401);
       }
       try {
@@ -470,7 +566,8 @@ Main behavior rules:
     }
 
     if (url.pathname === "/embeddings" && req.method === "POST") {
-      if (!checkAuthorization(req)) {
+      const authResult = checkAuthorization(req);
+      if (!authResult.authorized) {
         return buildResponse({ error: "Unauthorized" }, 401);
       }
       try {
@@ -546,7 +643,8 @@ Main behavior rules:
     }
 
     if (url.pathname === "/memory/save" && req.method === "POST") {
-      if (!checkAuthorization(req)) {
+      const authResult = checkAuthorization(req);
+      if (!authResult.authorized) {
         return buildResponse({ error: "Unauthorized" }, 401);
       }
       
@@ -595,7 +693,8 @@ Main behavior rules:
     }
 
     if (url.pathname === "/memory/get" && req.method === "POST") {
-      if (!checkAuthorization(req)) {
+      const authResult = checkAuthorization(req);
+      if (!authResult.authorized) {
         return buildResponse({ error: "Unauthorized" }, 401);
       }
       
@@ -644,7 +743,8 @@ Main behavior rules:
     }
 
     if (url.pathname === "/feedback" && req.method === "POST") {
-      if (!checkAuthorization(req)) {
+      const authResult = checkAuthorization(req);
+      if (!authResult.authorized) {
         return buildResponse({ error: "Unauthorized" }, 401);
       }
       try {
