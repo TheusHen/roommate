@@ -128,7 +128,7 @@ function getClientIP(req: Request): string {
   
   if (xForwardedFor) {
     // x-forwarded-for can contain multiple IPs, take the first one
-    return xForwardedFor.split(',')[0].trim();
+    return xForwardedFor.split(',')[0]?.trim() || 'unknown';
   }
   
   if (xRealIP) {
