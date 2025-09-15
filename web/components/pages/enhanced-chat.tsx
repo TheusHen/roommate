@@ -344,7 +344,7 @@ export function EnhancedChatPage({ onVoiceChatOpen }: EnhancedChatPageProps) {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Test Limit Reached</h3>
                 <p className="text-gray-600 mb-6">
-                  You've used all 3 free test messages. To continue using Roommate, set up your own server.
+                  You&apos;ve used all 3 free test messages. To continue using Roommate, set up your own server.
                 </p>
                 <div className="flex gap-3">
                   <button
