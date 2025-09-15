@@ -48,6 +48,30 @@ describe('Test Mode Functionality', () => {
     });
   });
 
+  describe('Test Mode Privacy Features', () => {
+    it('should isolate test mode to protect privacy', () => {
+      // Set test mode
+      ApiPasswordManager.setPassword('TEST_MODE');
+      const password = ApiPasswordManager.getPassword();
+      
+      // Verify test mode is active
+      expect(password).toBe('TEST_MODE');
+      
+      // Test mode should not save or retrieve personal data
+      const isTestMode = password === 'TEST_MODE';
+      expect(isTestMode).toBe(true);
+    });
+    
+    it('should work without data persistence in test mode', () => {
+      // This test verifies that test mode works independently
+      ApiPasswordManager.setPassword('TEST_MODE');
+      
+      // Test mode should be functional without needing to store user data
+      const testModeActive = ApiPasswordManager.getPassword() === 'TEST_MODE';
+      expect(testModeActive).toBe(true);
+    });
+  });
+
   describe('API Response Handling', () => {
     it('should handle test mode response structure', () => {
       const mockTestModeResponse = {

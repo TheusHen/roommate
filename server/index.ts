@@ -354,9 +354,9 @@ const server = Bun.serve({
 
         console.log(`[REQUEST] /chat with prompt: ${prompt}`);
 
-        // Enrich prompt with user context if MongoDB is available
+        // Enrich prompt with user context if MongoDB is available AND not in test mode
         let enrichedPrompt = prompt;
-        if (mongoHandlerConnected) {
+        if (mongoHandlerConnected && !authResult.isTestMode) {
           try {
             // Use a default user ID for now - in a real app this would come from authentication
             const userId = "default-user";
@@ -400,6 +400,8 @@ const server = Bun.serve({
             console.error("[WARN] Memory enrichment failed:", memoryError);
             // Continue with original prompt if memory fails
           }
+        } else if (authResult.isTestMode) {
+          console.log("[INFO] Test mode: Skipping memory operations for privacy");
         }
 
         const ollamaController = new AbortController();
@@ -663,6 +665,16 @@ Main behavior rules:
         return buildResponse({ error: "Unauthorized" }, 401);
       }
       
+      // Prevent memory saving in test mode for privacy
+      if (authResult.isTestMode) {
+        console.log("[INFO] Test mode: Memory save blocked for privacy");
+        return buildResponse({ 
+          success: true, 
+          message: "Test mode: Memory operations are disabled for privacy",
+          test_mode: true 
+        });
+      }
+      
       if (!mongoHandlerConnected) {
         return buildResponse({ 
           error: "MongoDB Handler not available", 
@@ -711,6 +723,16 @@ Main behavior rules:
       const authResult = checkAuthorization(req);
       if (!authResult.authorized) {
         return buildResponse({ error: "Unauthorized" }, 401);
+      }
+      
+      // Prevent memory retrieval in test mode for privacy
+      if (authResult.isTestMode) {
+        console.log("[INFO] Test mode: Memory get blocked for privacy");
+        return buildResponse({ 
+          memories: [], 
+          message: "Test mode: Memory operations are disabled for privacy",
+          test_mode: true 
+        });
       }
       
       if (!mongoHandlerConnected) {

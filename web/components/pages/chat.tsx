@@ -236,7 +236,7 @@ export function ChatPage({ onVoiceChatOpen }: ChatPageProps) {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask me anything (math, science, study tips...)"
                 disabled={isLoading}
-                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
+                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 text-gray-900 placeholder:text-gray-500 bg-white"
               />
             </div>
             <button
