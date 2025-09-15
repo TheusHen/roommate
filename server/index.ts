@@ -105,6 +105,21 @@ const testModeUsage = new Map<string, { count: number; firstRequest: number }>()
 const TEST_MODE_LIMIT = 3;
 const TEST_MODE_TOKEN = 'TEST_MODE';
 
+// Clean up old entries periodically (24 hours)
+const CLEANUP_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+function cleanupOldTestModeEntries() {
+  const now = Date.now();
+  for (const [ip, usage] of testModeUsage.entries()) {
+    if (now - usage.firstRequest > CLEANUP_INTERVAL) {
+      testModeUsage.delete(ip);
+    }
+  }
+}
+
+// Run cleanup every hour
+setInterval(cleanupOldTestModeEntries, 60 * 60 * 1000);
+
 function getClientIP(req: Request): string {
   // Try to get IP from various headers (considering proxies)
   const xForwardedFor = req.headers.get('x-forwarded-for');
